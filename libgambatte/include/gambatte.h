@@ -30,6 +30,8 @@ namespace gambatte {
 enum { BG_PALETTE = 0, SP1_PALETTE = 1, SP2_PALETTE = 2 };
 
 class GB {
+	friend class GBDebugger;
+	
 public:
 	GB();
 	~GB();

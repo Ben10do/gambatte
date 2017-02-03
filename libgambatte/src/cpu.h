@@ -23,6 +23,10 @@
 
 namespace gambatte {
 
+enum EndCondition { NORMAL_END = 0,					 // End only when cycles have elapsed.
+					END_ON_BREAKPOINT = 1 << 0,		 // End when a breakpoint is reached.
+					END_ON_DESIRED_STACK = 1 << 1 }; // End when desiredStack == 0. (for step over and step out)
+
 class CPU {
 public:
 	CPU();
@@ -71,6 +75,17 @@ public:
 	void setGameGenie(std::string const &codes) { mem_.setGameGenie(codes); }
 	void setGameShark(std::string const &codes) { mem_.setGameShark(codes); }
 
+	unsigned readByte(unsigned p) { return mem_.read(p, cycleCounter_); }
+	void writeByte(unsigned p, unsigned data) { mem_.write(p, data, cycleCounter_); }
+	
+	unsigned getEndConditions() const { return endCondition_; }
+	void setEndCondition(enum EndCondition endCondition) { endCondition_ |= endCondition; }
+	void disableEndCondition(enum EndCondition endCondition) { endCondition_ &= ~endCondition; };
+	void setDesiredStack(int desiredStack) { desiredStack_ = desiredStack; }
+
+	unsigned short getPC() const { return pc_; }
+	void setPC(unsigned short newPC) { pc_ = newPC; }
+
 private:
 	Memory mem_;
 	unsigned long cycleCounter_;
@@ -79,8 +94,12 @@ private:
 	unsigned hf1, hf2, zf, cf;
 	unsigned char a_, b, c, d, e, /*f,*/ h, l;
 	bool skip_;
+	
+	unsigned endCondition_;
+	int desiredStack_;
 
 	void process(unsigned long cycles);
+	bool shouldProcess() const;
 };
 
 }

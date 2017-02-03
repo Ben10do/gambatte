@@ -13,6 +13,7 @@ env = Environment(CPPPATH = ['src', 'include', '../common'],
 sourceFiles = Split('''
 			src/bitmap_font.cpp
 			src/cpu.cpp
+            src/debugger.cpp
 			src/gambatte.cpp
 			src/initstate.cpp
 			src/interrupter.cpp

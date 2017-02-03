@@ -39,6 +39,8 @@ CPU::CPU()
 , h(0x01)
 , l(0x4D)
 , skip_(false)
+, endCondition_(NORMAL_END)
+, desiredStack_(0)
 {
 }
 
@@ -119,6 +121,9 @@ void CPU::loadState(SaveState const &state) {
 	h = state.cpu.h & 0xFF;
 	l = state.cpu.l & 0xFF;
 	skip_ = state.cpu.skip;
+	
+	endCondition_ = NORMAL_END;
+	desiredStack_ = 0;
 }
 
 // The main reasons for the use of macros is to more conveniently be able to tweak
@@ -469,6 +474,7 @@ void CPU::loadState(SaveState const &state) {
 	unsigned const npc = (pc + 2) & 0xFFFF; \
 	jp_nn(); \
 	PUSH(npc >> 8, npc & 0xFF); \
+	desiredStack_++; \
 } while (0)
 
 // rst n (16 Cycles):
@@ -476,6 +482,7 @@ void CPU::loadState(SaveState const &state) {
 #define rst_n(n) do { \
 	PUSH(pc >> 8, pc & 0xFF); \
 	PC_MOD(n); \
+	desiredStack_++; \
 } while (0)
 
 // ret (16 cycles):
@@ -484,6 +491,7 @@ void CPU::loadState(SaveState const &state) {
 	unsigned low, high; \
 	pop_rr(high, low); \
 	PC_MOD(high << 8 | low); \
+	desiredStack_--; \
 } while (0)
 
 void CPU::process(unsigned long const cycles) {
@@ -501,7 +509,7 @@ void CPU::process(unsigned long const cycles) {
 				unsigned long cycles = mem_.nextEventTime() - cycleCounter;
 				cycleCounter += cycles + (-cycles & 3);
 			}
-		} else while (cycleCounter < mem_.nextEventTime()) {
+		} else while (cycleCounter < mem_.nextEventTime() && shouldProcess()) {
 			unsigned char opcode;
 
 			PC_READ(opcode);
@@ -1983,10 +1991,20 @@ void CPU::process(unsigned long const cycles) {
 
 		pc_ = pc;
 		cycleCounter = mem_.event(cycleCounter);
+		
+		if ((endCondition_ & END_ON_DESIRED_STACK) && desiredStack_ <= 0) {
+			endCondition_ ^= END_ON_DESIRED_STACK;
+			desiredStack_ = 0;
+			break;
+		}
 	}
 
 	a_ = a;
 	cycleCounter_ = cycleCounter;
+}
+
+bool CPU::shouldProcess() const {
+	return !((endCondition_ & END_ON_DESIRED_STACK) && desiredStack_ <= 0);
 }
 
 }

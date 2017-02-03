@@ -22,6 +22,7 @@
 #include "savestate.h"
 #include "state_osd_elements.h"
 #include "statesaver.h"
+#include "gambattepriv.h"
 #include <cstring>
 #include <sstream>
 
@@ -36,14 +37,6 @@ static std::string const statePath(std::string const &basePath, int stateNo) {
 }
 
 namespace gambatte {
-
-struct GB::Priv {
-	CPU cpu;
-	int stateNo;
-	unsigned loadflags;
-
-	Priv() : stateNo(1), loadflags(0) {}
-};
 
 GB::GB() : p_(new Priv) {}
 
