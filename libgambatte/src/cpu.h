@@ -20,6 +20,7 @@
 #define CPU_H
 
 #include "memory.h"
+#include "cpuregisters.h"
 
 namespace gambatte {
 
@@ -83,8 +84,8 @@ public:
 	void disableEndCondition(enum EndCondition endCondition) { endCondition_ &= ~endCondition; };
 	void setDesiredStack(int desiredStack) { desiredStack_ = desiredStack; }
 
-	unsigned short getPC() const { return pc_; }
-	void setPC(unsigned short newPC) { pc_ = newPC; }
+	CPURegisters getRegisters() const;
+	void setRegisters(const CPURegisters &newRegisters);
 
 private:
 	Memory mem_;
@@ -97,10 +98,10 @@ private:
 	
 	unsigned endCondition_;
 	int desiredStack_;
-	bool skipBreakpoint;
+	bool skipBreakpoint_;
 
 	void process(unsigned long cycles);
-	bool shouldProcess() const;
+	bool shouldProcess();
 };
 
 }

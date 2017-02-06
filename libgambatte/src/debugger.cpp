@@ -45,12 +45,12 @@ void GBDebugger::stepOut() {
 	p_->cpu.setDesiredStack(1);
 }
 
-unsigned short GBDebugger::getPC() {
-	return p_->cpu.getPC();
+CPURegisters GBDebugger::getRegisters() const {
+	return p_->cpu.getRegisters();
 }
 
-void GBDebugger::setPC(unsigned short newPC) {
-	p_->cpu.setPC(newPC);
+void GBDebugger::setRegisters(const CPURegisters &newRegisters) {
+	p_->cpu.setRegisters(newRegisters);
 }
 
 }

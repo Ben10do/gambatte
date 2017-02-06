@@ -20,6 +20,7 @@
 #define DEBUGGER_H
 
 #include "gambatte.h"
+#include "cpuregisters.h"
 
 namespace gambatte {
 
@@ -61,14 +62,14 @@ public:
 	void stepOut();
 
 	/**
-	 * Get the current value of the CPU's program counter.
+	 * Get the current value of the CPU's registers.
 	 */
-	unsigned short getPC();
+	CPURegisters getRegisters() const;
 	
 	/**
-	 * Set the CPU's program counter to the given value.
+	 * Set the CPU's registers to the given values.
 	 */
-	void setPC(unsigned short newPC);
+	void setRegisters(const CPURegisters &newRegisters);
 
 };
 

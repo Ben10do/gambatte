@@ -505,7 +505,7 @@ void CPU::process(unsigned long const cycles) {
 
 	while (mem_.isActive()) {
 		unsigned short pc = pc_;
-		bool shouldProcess = shouldProcess();
+		bool shouldProcess = this->shouldProcess();
 
 		if (mem_.halted()) {
 			if (cycleCounter < mem_.nextEventTime()) {
@@ -2004,7 +2004,7 @@ void CPU::process(unsigned long const cycles) {
 	cycleCounter_ = cycleCounter;
 }
 
-bool CPU::shouldProcess() const {
+bool CPU::shouldProcess() {
 	if (endCondition_ != NORMAL_END) {
 		if ((endCondition_ & END_ON_BREAKPOINT) && mem_.read(pc_, cycleCounter_) == 0x40) {
 			// ld b, b breakpoint
@@ -2025,6 +2025,38 @@ bool CPU::shouldProcess() const {
 
 	return true;
 	
+}
+
+CPURegisters CPU::getRegisters() const {
+	CPURegisters registers;
+	
+	registers.pc = pc_;
+	registers.sp = sp;
+	registers.a = a_;
+	registers.b = b;
+	registers.c = c;
+	registers.d = d;
+	registers.e = e;
+	registers.f = toF(hf2, cf, zf);
+	registers.h = h;
+	registers.l = l;
+	
+	return registers;
+}
+
+void CPU::setRegisters(const CPURegisters &newRegisters) {
+	pc_ = newRegisters.pc;
+	sp = newRegisters.sp;
+	a_ = newRegisters.a;
+	b = newRegisters.b;
+	c = newRegisters.c;
+	d = newRegisters.d;
+	e = newRegisters.e;
+	zf  =  zfFromF(newRegisters.f);
+	hf2 = hf2FromF(newRegisters.f);
+	cf  =  cfFromF(newRegisters.f);
+	h = newRegisters.h;
+	l = newRegisters.l;
 }
 
 }
