@@ -41,6 +41,7 @@ CPU::CPU()
 , skip_(false)
 , endCondition_(NORMAL_END)
 , desiredStack_(0)
+, skipBreakpoint_(false)
 {
 }
 
@@ -124,6 +125,7 @@ void CPU::loadState(SaveState const &state) {
 	
 	endCondition_ = NORMAL_END;
 	desiredStack_ = 0;
+	skipBreakpoint_ = false;
 }
 
 // The main reasons for the use of macros is to more conveniently be able to tweak
@@ -503,13 +505,14 @@ void CPU::process(unsigned long const cycles) {
 
 	while (mem_.isActive()) {
 		unsigned short pc = pc_;
+		bool shouldProcess = shouldProcess();
 
 		if (mem_.halted()) {
 			if (cycleCounter < mem_.nextEventTime()) {
 				unsigned long cycles = mem_.nextEventTime() - cycleCounter;
 				cycleCounter += cycles + (-cycles & 3);
 			}
-		} else while (cycleCounter < mem_.nextEventTime() && shouldProcess()) {
+		} else while (cycleCounter < mem_.nextEventTime() && shouldProcess) {
 			unsigned char opcode;
 
 			PC_READ(opcode);
@@ -1992,9 +1995,7 @@ void CPU::process(unsigned long const cycles) {
 		pc_ = pc;
 		cycleCounter = mem_.event(cycleCounter);
 		
-		if ((endCondition_ & END_ON_DESIRED_STACK) && desiredStack_ <= 0) {
-			endCondition_ ^= END_ON_DESIRED_STACK;
-			desiredStack_ = 0;
+		if (!shouldProcess) {
 			break;
 		}
 	}
@@ -2004,7 +2005,26 @@ void CPU::process(unsigned long const cycles) {
 }
 
 bool CPU::shouldProcess() const {
-	return !((endCondition_ & END_ON_DESIRED_STACK) && desiredStack_ <= 0);
+	if (endCondition_ != NORMAL_END) {
+		if ((endCondition_ & END_ON_BREAKPOINT) && mem_.read(pc_, cycleCounter_) == 0x40) {
+			// ld b, b breakpoint
+			skipBreakpoint_ = !skipBreakpoint_;
+			bool shouldStop = skipBreakpoint_;
+			
+			if (shouldStop) {
+				return false;
+			}
+
+		} else if ((endCondition_ & END_ON_DESIRED_STACK) && desiredStack_ <= 0) {
+			// Step over/in/out done
+			endCondition_ ^= END_ON_DESIRED_STACK;
+			desiredStack_ = 0;
+			return false;
+		}
+	}
+
+	return true;
+	
 }
 
 }

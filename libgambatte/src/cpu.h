@@ -97,6 +97,7 @@ private:
 	
 	unsigned endCondition_;
 	int desiredStack_;
+	bool skipBreakpoint;
 
 	void process(unsigned long cycles);
 	bool shouldProcess() const;
