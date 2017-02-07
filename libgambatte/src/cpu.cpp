@@ -92,16 +92,7 @@ void CPU::saveState(SaveState &state) {
 	hf2 = updateHf2FromHf1(hf1, hf2);
 
 	state.cpu.cycleCounter = cycleCounter_;
-	state.cpu.pc = pc_;
-	state.cpu.sp = sp;
-	state.cpu.a = a_;
-	state.cpu.b = b;
-	state.cpu.c = c;
-	state.cpu.d = d;
-	state.cpu.e = e;
-	state.cpu.f = toF(hf2, cf, zf);
-	state.cpu.h = h;
-	state.cpu.l = l;
+	state.cpu.reg = getRegisters();
 	state.cpu.skip = skip_;
 }
 
@@ -109,18 +100,7 @@ void CPU::loadState(SaveState const &state) {
 	mem_.loadState(state);
 
 	cycleCounter_ = state.cpu.cycleCounter;
-	pc_ = state.cpu.pc & 0xFFFF;
-	sp = state.cpu.sp & 0xFFFF;
-	a_ = state.cpu.a & 0xFF;
-	b = state.cpu.b & 0xFF;
-	c = state.cpu.c & 0xFF;
-	d = state.cpu.d & 0xFF;
-	e = state.cpu.e & 0xFF;
-	zf  =  zfFromF(state.cpu.f);
-	hf2 = hf2FromF(state.cpu.f);
-	cf  =  cfFromF(state.cpu.f);
-	h = state.cpu.h & 0xFF;
-	l = state.cpu.l & 0xFF;
+	setRegisters(state.cpu.reg);
 	skip_ = state.cpu.skip;
 	
 	endCondition_ = NORMAL_END;

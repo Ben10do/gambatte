@@ -19,6 +19,7 @@
 #ifndef SAVESTATE_H
 #define SAVESTATE_H
 
+#include "cpuregisters.h"
 #include <cstddef>
 
 namespace gambatte {
@@ -44,16 +45,7 @@ struct SaveState {
 
 	struct CPU {
 		unsigned long cycleCounter;
-		unsigned short pc;
-		unsigned short sp;
-		unsigned char a;
-		unsigned char b;
-		unsigned char c;
-		unsigned char d;
-		unsigned char e;
-		unsigned char f;
-		unsigned char h;
-		unsigned char l;
+		CPURegisters reg;
 		unsigned char /*bool*/ skip;
 	} cpu;
 

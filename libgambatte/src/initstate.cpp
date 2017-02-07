@@ -1168,16 +1168,16 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const gbaCgbM
 	};
 
 	state.cpu.cycleCounter = cgb ? 0x102A0 : 0x102A0 + 0x8D2C;
-	state.cpu.pc = 0x100;
-	state.cpu.sp = 0xFFFE;
-	state.cpu.a = cgb * 0x10 | 0x01;
-	state.cpu.b = cgb & gbaCgbMode;
-	state.cpu.c = 0x13;
-	state.cpu.d = 0x00;
-	state.cpu.e = 0xD8;
-	state.cpu.f = 0xB0;
-	state.cpu.h = 0x01;
-	state.cpu.l = 0x4D;
+	state.cpu.reg.pc = 0x100;
+	state.cpu.reg.sp = 0xFFFE;
+	state.cpu.reg.a = cgb * 0x10 | 0x01;
+	state.cpu.reg.b = cgb & gbaCgbMode;
+	state.cpu.reg.c = 0x13;
+	state.cpu.reg.d = 0x00;
+	state.cpu.reg.e = 0xD8;
+	state.cpu.reg.f = 0xB0;
+	state.cpu.reg.h = 0x01;
+	state.cpu.reg.l = 0x4D;
 	state.cpu.skip = false;
 
 	std::memset(state.mem.sram.ptr, 0xFF, state.mem.sram.size());

@@ -212,16 +212,16 @@ SaverList::SaverList() {
 } while (0)
 
 	{ static char const label[] = { c,c,           NUL }; ADD(cpu.cycleCounter); }
-	{ static char const label[] = { p,c,           NUL }; ADD(cpu.pc); }
-	{ static char const label[] = { s,p,           NUL }; ADD(cpu.sp); }
-	{ static char const label[] = { a,             NUL }; ADD(cpu.a); }
-	{ static char const label[] = { b,             NUL }; ADD(cpu.b); }
-	{ static char const label[] = { c,             NUL }; ADD(cpu.c); }
-	{ static char const label[] = { d,             NUL }; ADD(cpu.d); }
-	{ static char const label[] = { e,             NUL }; ADD(cpu.e); }
-	{ static char const label[] = { f,             NUL }; ADD(cpu.f); }
-	{ static char const label[] = { h,             NUL }; ADD(cpu.h); }
-	{ static char const label[] = { l,             NUL }; ADD(cpu.l); }
+	{ static char const label[] = { p,c,           NUL }; ADD(cpu.reg.pc); }
+	{ static char const label[] = { s,p,           NUL }; ADD(cpu.reg.sp); }
+	{ static char const label[] = { a,             NUL }; ADD(cpu.reg.a); }
+	{ static char const label[] = { b,             NUL }; ADD(cpu.reg.b); }
+	{ static char const label[] = { c,             NUL }; ADD(cpu.reg.c); }
+	{ static char const label[] = { d,             NUL }; ADD(cpu.reg.d); }
+	{ static char const label[] = { e,             NUL }; ADD(cpu.reg.e); }
+	{ static char const label[] = { f,             NUL }; ADD(cpu.reg.f); }
+	{ static char const label[] = { h,             NUL }; ADD(cpu.reg.h); }
+	{ static char const label[] = { l,             NUL }; ADD(cpu.reg.l); }
 	{ static char const label[] = { s,k,i,p,       NUL }; ADD(cpu.skip); }
 	{ static char const label[] = { h,a,l,t,       NUL }; ADD(mem.halted); }
 	{ static char const label[] = { v,r,a,m,       NUL }; ADDPTR(mem.vram); }
