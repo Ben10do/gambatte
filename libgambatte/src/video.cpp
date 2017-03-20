@@ -35,9 +35,9 @@ static unsigned long gbcToRgb32(unsigned const bgr15) {
 	unsigned long const g = bgr15 >>  5 & 0x1F;
 	unsigned long const b = bgr15 >> 10 & 0x1F;
 
-	return ((r * 13 + g * 2 + b) >> 1) << 16
+	return (r * 13 + g * 2 + b) >> 1
 	     | (g * 3 + b) << 9
-	     | (r * 3 + g * 2 + b * 11) >> 1;
+	     | ((r * 3 + g * 2 + b * 11) >> 1) << 16;
 }
 
 /*static unsigned long gbcToRgb16(unsigned const bgr15) {
