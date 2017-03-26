@@ -70,6 +70,14 @@ public:
 
 	void setGameGenie(std::string const &codes) { mem_.setGameGenie(codes); }
 	void setGameShark(std::string const &codes) { mem_.setGameShark(codes); }
+    
+	void resetMemorySize(bool const forceDmg) {
+		mem_.resetMemorySize(forceDmg);
+	}
+	
+	void resetMbc(bool const multicartCompat) {
+		mem_.resetMbc(multicartCompat);
+	}
 
 private:
 	Memory mem_;

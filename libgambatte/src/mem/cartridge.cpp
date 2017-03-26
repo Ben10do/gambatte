@@ -543,13 +543,7 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 	if (rom->fail())
 		return LOADRES_IO_ERROR;
 
-	enum Cartridgetype { type_plain,
-	                     type_mbc1,
-	                     type_mbc2,
-	                     type_mbc3,
-	                     type_mbc5,
-	                     type_huc1 };
-	Cartridgetype type = type_plain;
+	type_ = type_plain;
 	unsigned rambanks = 1;
 	unsigned rombanks = 2;
 	bool cgb = false;
@@ -559,14 +553,14 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 		rom->read(reinterpret_cast<char *>(header), sizeof header);
 
 		switch (header[0x0147]) {
-		case 0x00: type = type_plain; break;
+		case 0x00: type_ = type_plain; break;
 		case 0x01:
 		case 0x02:
-		case 0x03: type = type_mbc1; break;
+		case 0x03: type_ = type_mbc1; break;
 		case 0x05:
-		case 0x06: type = type_mbc2; break;
+		case 0x06: type_ = type_mbc2; break;
 		case 0x08:
-		case 0x09: type = type_plain; break;
+		case 0x09: type_ = type_plain; break;
 		case 0x0B:
 		case 0x0C:
 		case 0x0D: return LOADRES_UNSUPPORTED_MBC_MMM01;
@@ -574,7 +568,7 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 		case 0x10:
 		case 0x11:
 		case 0x12:
-		case 0x13: type = type_mbc3; break;
+		case 0x13: type_ = type_mbc3; break;
 		case 0x15:
 		case 0x16:
 		case 0x17: return LOADRES_UNSUPPORTED_MBC_MBC4;
@@ -583,13 +577,13 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 		case 0x1B:
 		case 0x1C:
 		case 0x1D:
-		case 0x1E: type = type_mbc5; break;
+		case 0x1E: type_ = type_mbc5; break;
 		case 0x20: return LOADRES_UNSUPPORTED_MBC_MBC6;
 		case 0x22: return LOADRES_UNSUPPORTED_MBC_MBC7;
 		case 0xFC: return LOADRES_UNSUPPORTED_MBC_POCKET_CAMERA;
 		case 0xFD: return LOADRES_UNSUPPORTED_MBC_TAMA5;
 		case 0xFE: return LOADRES_UNSUPPORTED_MBC_HUC3;
-		case 0xFF: type = type_huc1; break;
+		case 0xFF: type_ = type_huc1; break;
 		default:   return LOADRES_BAD_FILE_OR_UNKNOWN_MBC;
 		}
 
@@ -634,10 +628,22 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 
 	defaultSaveBasePath_ = stripExtension(romfile);
 
-	switch (type) {
+	setMbc(multicartCompat);
+
+	return LOADRES_OK;
+}
+
+void Cartridge::setMemPtrs(bool const forceDmg) {
+	unsigned rambanks = numRambanksFromH14x(memptrs_.romdata()[0x147], memptrs_.romdata()[0x149]);
+	bool cgb = memptrs_.romdata()[0x0143] >> 7 & (1 ^ forceDmg);
+    memptrs_.resetWithRomIntact(rambanks, cgb ? 8 : 2);
+}
+
+void Cartridge::setMbc(bool const multicartCompat) {
+	switch (type_) {
 	case type_plain: mbc_.reset(new Mbc0(memptrs_)); break;
 	case type_mbc1:
-		if (multicartCompat && presumedMulti64Mbc1(memptrs_.romdata(), rombanks)) {
+		if (multicartCompat && presumedMulti64Mbc1(memptrs_.romdata(), (memptrs_.romdata() - memptrs_.romdataend()) / 0x4000)) {
 			mbc_.reset(new Mbc1Multi64(memptrs_));
 		} else
 			mbc_.reset(new Mbc1(memptrs_));
@@ -650,8 +656,6 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 	case type_mbc5: mbc_.reset(new Mbc5(memptrs_)); break;
 	case type_huc1: mbc_.reset(new HuC1(memptrs_)); break;
 	}
-
-	return LOADRES_OK;
 }
 
 static bool hasBattery(unsigned char headerByte0x147) {

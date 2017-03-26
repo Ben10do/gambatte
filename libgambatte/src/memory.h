@@ -108,6 +108,15 @@ public:
 	void setGameGenie(std::string const &codes) { cart_.setGameGenie(codes); }
 	void setGameShark(std::string const &codes) { interrupter_.setGameShark(codes); }
 	void updateInput();
+	
+	void resetMemorySize(bool const forceDmg) {
+		cart_.setMemPtrs(forceDmg);
+		updateCgb();
+	}
+	
+	void resetMbc(bool const multicartCompat) {
+		cart_.setMbc(multicartCompat);
+	}
 
 private:
 	Cartridge cart_;
@@ -140,6 +149,7 @@ private:
 	void updateTimaIrq(unsigned long cc);
 	void updateIrqs(unsigned long cc);
 	bool isDoubleSpeed() const { return lcd_.isDoubleSpeed(); }
+	void updateCgb();
 };
 
 }

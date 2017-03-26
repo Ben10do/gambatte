@@ -71,9 +71,24 @@ std::ptrdiff_t GB::runFor(gambatte::uint_least32_t *const videoBuf, std::ptrdiff
 	     : cyclesSinceBlit;
 }
 
-void GB::reset() {
+void GB::resetWithFlags(unsigned const flags, const bool saveSaveData) {
+	p_->loadflags = flags;
+    if (p_->cpu.loaded()) {
+        if (saveSaveData) {
+            p_->cpu.saveSavedata();
+        }
+        
+        p_->cpu.resetMemorySize(flags & FORCE_DMG);
+        p_->cpu.resetMbc(flags & MULTICART_COMPAT);
+        reset(false);
+    }
+}
+
+void GB::reset(const bool saveSaveData) {
 	if (p_->cpu.loaded()) {
-		p_->cpu.saveSavedata();
+        if (saveSaveData) {
+    		p_->cpu.saveSavedata();
+        }
 
 		SaveState state;
 		p_->cpu.setStatePtrs(state);

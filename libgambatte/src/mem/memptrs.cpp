@@ -68,6 +68,38 @@ void MemPtrs::reset(unsigned const rombanks, unsigned const rambanks, unsigned c
 	setWrambank(1);
 }
 
+void MemPtrs::resetWithRomIntact(unsigned const rambanks, unsigned const wrambanks) {
+	unsigned romsize = romdataend() - romdata();
+		
+	unsigned char *newmemchunk = new unsigned char[
+		  0x4000
+		+ romsize
+		+ 0x4000
+		+ rambanks * 0x2000ul
+		+ wrambanks * 0x1000ul
+		+ 0x4000];
+	
+	std::copy(memchunk_, rambankdata_, newmemchunk);
+	delete []memchunk_;
+	memchunk_ = newmemchunk;
+		
+	romdata_[0] = romdata();
+	rambankdata_ = romdata_[0] + romsize + 0x4000;
+	wramdata_[0] = rambankdata_ + rambanks * 0x2000ul;
+	wramdataend_ = wramdata_[0] + wrambanks * 0x1000ul;
+	
+	std::memset(rdisabledRamw(), 0xFF, 0x2000);
+	
+	oamDmaSrc_ = oam_dma_src_off;
+	rmem_[0x3] = rmem_[0x2] = rmem_[0x1] = rmem_[0x0] = romdata_[0];
+	rmem_[0xC] = wmem_[0xC] = wramdata_[0] - 0xC000;
+	rmem_[0xE] = wmem_[0xE] = wramdata_[0] - 0xE000;
+	setRombank(1);
+	setRambank(0, 0);
+	setVrambank(0);
+	setWrambank(1);	
+}
+
 void MemPtrs::setRombank0(unsigned bank) {
 	romdata_[0] = romdata() + bank * 0x4000ul;
 	rmem_[0x3] = rmem_[0x2] = rmem_[0x1] = rmem_[0x0] = romdata_[0];

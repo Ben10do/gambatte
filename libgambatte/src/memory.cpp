@@ -1054,11 +1054,15 @@ LoadRes Memory::loadROM(std::string const &romfile, bool const forceDmg, bool co
 	if (LoadRes const fail = cart_.loadROM(romfile, forceDmg, multicartCompat))
 		return fail;
 
-	psg_.init(cart_.isCgb());
-	lcd_.reset(ioamhram_, cart_.vramdata(), cart_.isCgb());
+	updateCgb();
 	interrupter_.setGameShark(std::string());
 
 	return LOADRES_OK;
+}
+
+void Memory::updateCgb() {
+	psg_.init(cart_.isCgb());
+	lcd_.reset(ioamhram_, cart_.vramdata(), cart_.isCgb());
 }
 
 std::size_t Memory::fillSoundBuffer(unsigned long cc) {
