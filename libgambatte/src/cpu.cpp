@@ -593,6 +593,7 @@ void CPU::process(unsigned long const cycles) {
 			case 0x10:
 				unsigned char nextByte;
 				PC_READ(nextByte);
+				cycleCounter -= 4;
 				if (nextByte != 0x00) {
 					hang_ = true;
 					break;

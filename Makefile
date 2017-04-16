@@ -118,7 +118,6 @@ test: $(TEST)
 		test/hwtests/*/*.asm \
 		test/hwtests/*/*/*.asm \
 		test/hwtests/*/*/*/*.asm
-	$(TEST) $(TEST_GBS)
 
 PNG_LFLAGS != $(PKG_CONFIG) --libs libpng
 $(TEST): $(TEST_OBJECTS) $(LIB)
