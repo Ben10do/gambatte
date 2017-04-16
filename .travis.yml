@@ -1,0 +1,16 @@
+language: cpp
+
+os:
+    - linux
+    - osx
+
+compiler:
+    - clang
+    - gcc
+
+addons:
+    apt:
+        packages:
+            - libpng-dev
+
+script: make libgambatte test && cd test && ./run_tests.sh
