@@ -25,6 +25,7 @@
 #include "sound.h"
 #include "tima.h"
 #include "video.h"
+#include "serialgetter.h"
 
 namespace gambatte {
 
@@ -93,6 +94,14 @@ public:
 	LoadRes loadROM(std::string const &romfile, bool forceDmg, bool multicartCompat);
 	void setSaveDir(std::string const &dir) { cart_.setSaveDir(dir); }
 	void setInputGetter(InputGetter *getInput) { getInput_ = getInput; }
+	
+	void setSerialGetter(SerialGetter *getSerial) {
+		getSerial_ = getSerial;
+		if (getSerial_) {
+			getSerial_->setSpeed(isDoubleSpeed(), (ioamhram_[0x102] & 2) == 2);
+		}
+	}
+	
 	void setEndtime(unsigned long cc, unsigned long inc);
 	void setSoundBuffer(uint_least32_t *buf) { psg_.setBuffer(buf); }
 	std::size_t fillSoundBuffer(unsigned long cc);
@@ -122,6 +131,9 @@ private:
 	Cartridge cart_;
 	unsigned char ioamhram_[0x200];
 	InputGetter *getInput_;
+	SerialGetter *getSerial_;
+	unsigned char incomingSerialData_;
+	bool gotIncomingSerialData_;
 	unsigned long divLastUpdate_;
 	unsigned long lastOamDmaUpdate_;
 	InterruptRequester intreq_;
@@ -145,6 +157,7 @@ private:
 	unsigned nontrivial_read(unsigned p, unsigned long cycleCounter);
 	void nontrivial_ff_write(unsigned p, unsigned data, unsigned long cycleCounter);
 	void nontrivial_write(unsigned p, unsigned data, unsigned long cycleCounter);
+	bool checkSerial(unsigned long const cc);
 	void updateSerial(unsigned long cc);
 	void updateTimaIrq(unsigned long cc);
 	void updateIrqs(unsigned long cc);

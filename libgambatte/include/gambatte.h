@@ -21,6 +21,7 @@
 
 #include "gbint.h"
 #include "inputgetter.h"
+#include "serialgetter.h"
 #include "loadres.h"
 #include <cstddef>
 #include <string>
@@ -105,6 +106,11 @@ public:
 
 	/** Sets the callback used for getting input state. */
 	void setInputGetter(InputGetter *getInput);
+	
+	/**
+	 * Sets the callback used for getting and sending serial data.
+	 */
+	void setSerialGetter(SerialGetter *getSerial);
 
 	/**
 	  * Sets the directory used for storing save data. The default is the same directory as

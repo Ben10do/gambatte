@@ -40,6 +40,10 @@ public:
 	void setInputGetter(InputGetter *getInput) {
 		mem_.setInputGetter(getInput);
 	}
+	
+	void setSerialGetter(SerialGetter *getSerial) {
+		mem_.setSerialGetter(getSerial);
+	}
 
 	void setSaveDir(std::string const &sdir) {
 		mem_.setSaveDir(sdir);

@@ -27,6 +27,7 @@ namespace gambatte {
 
 Memory::Memory(Interrupter const &interrupter)
 : getInput_(0)
+, getSerial_(0)
 , divLastUpdate_(0)
 , lastOamDmaUpdate_(disabled_time)
 , lcd_(ioamhram_, 0, VideoInterruptRequester(intreq_))
@@ -127,17 +128,44 @@ void Memory::setEndtime(unsigned long cc, unsigned long inc) {
 	intreq_.setEventTime<intevent_end>(cc + (inc << isDoubleSpeed()));
 }
 
+bool Memory::checkSerial(unsigned long const cc) {
+	if (getSerial_ && intreq_.eventTime(intevent_serial) == disabled_time) {
+		if (getSerial_->isDataAvailable()) {
+			bool doubleSpeed, fastLink;
+			getSerial_->getSpeed(doubleSpeed, fastLink);
+			
+			// TODO: Handle if we're in double speed and they're not, and visa versa
+			serialCnt_ = 8;
+			gotIncomingSerialData_ = false;
+			intreq_.setEventTime<intevent_serial>(fastLink
+				? (cc & ~0x07ul) + 0x010 * 8
+				: (cc & ~0xFFul) + 0x200 * 8);
+			return true;
+		}
+	}
+	
+	return false;
+}
+
 void Memory::updateSerial(unsigned long const cc) {
 	if (intreq_.eventTime(intevent_serial) != disabled_time) {
+		if (!gotIncomingSerialData_) {
+			incomingSerialData_ = getSerial_ ? getSerial_->get((ioamhram_[0x102] & 1) == 1) : 0xFF;
+			gotIncomingSerialData_ = true;
+		}
+
 		if (intreq_.eventTime(intevent_serial) <= cc) {
-			ioamhram_[0x101] = (((ioamhram_[0x101] + 1) << serialCnt_) - 1) & 0xFF;
+			ioamhram_[0x101] = ((ioamhram_[0x101] << serialCnt_) | (incomingSerialData_ >> (-serialCnt_ & 7))) & 0xFF;
+			incomingSerialData_ <<= serialCnt_;
 			ioamhram_[0x102] &= 0x7F;
 			intreq_.setEventTime<intevent_serial>(disabled_time);
 			intreq_.flagIrq(8);
 		} else {
 			int const targetCnt = serialCntFrom(intreq_.eventTime(intevent_serial) - cc,
 			                                    ioamhram_[0x102] & isCgb() * 2);
-			ioamhram_[0x101] = (((ioamhram_[0x101] + 1) << (serialCnt_ - targetCnt)) - 1) & 0xFF;
+			int const currentCnt = serialCnt_ - targetCnt;
+			ioamhram_[0x101] = ((ioamhram_[0x101] << currentCnt) | (incomingSerialData_ >> (-currentCnt & 7))) & 0xFF;
+			incomingSerialData_ <<= currentCnt;
 			serialCnt_ = targetCnt;
 		}
 	}
@@ -604,6 +632,11 @@ void Memory::nontrivial_ff_write(unsigned const p, unsigned data, unsigned long 
 	case 0x02:
 		updateSerial(cc);
 		serialCnt_ = 8;
+		gotIncomingSerialData_ = false;
+		
+		if (getSerial_) {
+			getSerial_->setSpeed(isDoubleSpeed(), (data & 2) == 2 && isCgb());
+		}
 
 		if ((data & 0x81) == 0x81) {
 			intreq_.setEventTime<intevent_serial>(data & isCgb() * 2

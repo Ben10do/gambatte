@@ -102,6 +102,10 @@ void GB::setInputGetter(InputGetter *getInput) {
 	p_->cpu.setInputGetter(getInput);
 }
 
+void GB::setSerialGetter(SerialGetter *getSerial) {
+	p_->cpu.setSerialGetter(getSerial);
+}
+
 void GB::setSaveDir(std::string const &sdir) {
 	p_->cpu.setSaveDir(sdir);
 }
