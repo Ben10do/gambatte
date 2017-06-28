@@ -364,28 +364,9 @@ static void writeSnapShot(std::ofstream &file, uint_least32_t const *pixels, std
 	put24(file, pixels ? StateSaver::ss_width * StateSaver::ss_height * sizeof(uint_least32_t) : 0);
 
 	if (pixels) {
-		uint_least32_t buf[StateSaver::ss_width];
-
 		for (unsigned h = StateSaver::ss_height; h--;) {
-			for (unsigned x = 0; x < StateSaver::ss_width; ++x) {
-				uint_least32_t const *const p = pixels + x * StateSaver::ss_div;
-				PxlSum pxlsum[4] = { {0, 0}, {0, 0}, {0, 0}, {0, 0} };
-
-				addPxlPairs(pxlsum    , p            );
-				addPxlPairs(pxlsum + 2, p + pitch    );
-				addPxlPairs(pxlsum + 2, p + pitch * 2);
-				addPxlPairs(pxlsum    , p + pitch * 3);
-
-				blendPxlPairs(pxlsum    , pxlsum    );
-				blendPxlPairs(pxlsum + 1, pxlsum + 2);
-
-				blendPxlPairs(pxlsum    , pxlsum    );
-
-				buf[x] = ((pxlsum[0].rb & 0xFF00FF00U) | (pxlsum[0].g & 0x00FF0000U)) >> 8;
-			}
-
-			file.write(reinterpret_cast<char const *>(buf), sizeof buf);
-			pixels += pitch * StateSaver::ss_div;
+			file.write(reinterpret_cast<char const *>(pixels), StateSaver::ss_width * sizeof(uint_least32_t));
+			pixels += pitch;
 		}
 	}
 }
@@ -403,7 +384,7 @@ bool StateSaver::saveState(SaveState const &state,
 	if (!file)
 		return false;
 
-	{ static char const ver[] = { 0, 1 }; file.write(ver, sizeof ver); }
+	{ static char const ver[] = { 0, 2 }; file.write(ver, sizeof ver); }
 	writeSnapShot(file, videoBuf, pitch);
 
 	for (SaverList::const_iterator it = list.begin(); it != list.end(); ++it) {
