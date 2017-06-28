@@ -44,10 +44,6 @@ public:
 	void saveSavedata() { cart_.saveSavedata(); }
 	std::string const saveBasePath() const { return cart_.saveBasePath(); }
 
-	void setOsdElement(transfer_ptr<OsdElement> osdElement) {
-		lcd_.setOsdElement(osdElement);
-	}
-
 	unsigned long stop(unsigned long cycleCounter);
 	bool isCgb() const { return lcd_.isCgb(); }
 	bool ime() const { return intreq_.ime(); }

@@ -201,24 +201,6 @@ void LCD::refreshPalettes() {
 
 namespace {
 
-template<class Blend>
-static void blitOsdElement(uint_least32_t *d, uint_least32_t const *s,
-                           unsigned const width, unsigned h, std::ptrdiff_t const dpitch,
-                           Blend blend)
-{
-	while (h--) {
-		for (unsigned w = width; w--;) {
-			if (*s != OsdElement::pixel_transparent)
-				*d = blend(*s, *d);
-
-			++d;
-			++s;
-		}
-
-		d += dpitch - static_cast<std::ptrdiff_t>(width);
-	}
-}
-
 template<unsigned weight>
 struct Blend {
 	enum { SW = weight - 1 };
@@ -247,26 +229,6 @@ void LCD::updateScreen(bool const blanklcd, unsigned long const cycleCounter) {
 	if (blanklcd && ppu_.frameBuf().fb()) {
 		unsigned long color = ppu_.cgb() ? gbcToRgb32(0xFFFF) : dmgColorsRgb32_[0];
 		clear(ppu_.frameBuf().fb(), color, ppu_.frameBuf().pitch());
-	}
-
-	if (ppu_.frameBuf().fb() && osdElement_) {
-		if (uint_least32_t const *const s = osdElement_->update()) {
-			uint_least32_t *const d = ppu_.frameBuf().fb()
-				+ std::ptrdiff_t(osdElement_->y()) * ppu_.frameBuf().pitch()
-				+ osdElement_->x();
-
-			switch (osdElement_->opacity()) {
-			case OsdElement::seven_eighths:
-				blitOsdElement(d, s, osdElement_->w(), osdElement_->h(),
-				               ppu_.frameBuf().pitch(), Blend<8>());
-				break;
-			case OsdElement::three_fourths:
-				blitOsdElement(d, s, osdElement_->w(), osdElement_->h(),
-				               ppu_.frameBuf().pitch(), Blend<4>());
-				break;
-			}
-		} else
-			osdElement_.reset();
 	}
 }
 

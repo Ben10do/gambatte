@@ -21,7 +21,6 @@
 
 #include "interruptrequester.h"
 #include "minkeeper.h"
-#include "osd_element.h"
 #include "scoped_ptr.h"
 #include "video/lyc_irq.h"
 #include "video/m0_irq.h"
@@ -55,7 +54,6 @@ public:
 	void loadState(SaveState const &state, unsigned char const *oamram);
 	void setDmgPaletteColor(unsigned palNum, unsigned colorNum, unsigned long rgb32);
 	void setVideoBuffer(uint_least32_t *videoBuf, std::ptrdiff_t pitch);
-	void setOsdElement(transfer_ptr<OsdElement> osdElement) { osdElement_ = osdElement; }
 
 	void dmgBgPaletteChange(unsigned data, unsigned long cycleCounter) {
 		update(cycleCounter);
@@ -203,7 +201,6 @@ private:
 	M0Irq m0Irq_;
 	LycIrq lycIrq_;
 	NextM0Time nextM0Time_;
-	scoped_ptr<OsdElement> osdElement_;
 	unsigned char statReg_;
 	unsigned char m2IrqStatReg_;
 	unsigned char m1IrqStatReg_;

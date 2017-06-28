@@ -58,7 +58,6 @@ LIB_OBJECTS = \
 	libgambatte/src/loadres.o \
 	libgambatte/src/memory.o \
 	libgambatte/src/sound.o \
-	libgambatte/src/state_osd_elements.o \
 	libgambatte/src/statesaver.o \
 	libgambatte/src/tima.o \
 	libgambatte/src/file/file.o \

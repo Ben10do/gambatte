@@ -20,7 +20,6 @@
 #include "cpu.h"
 #include "initstate.h"
 #include "savestate.h"
-#include "state_osd_elements.h"
 #include "statesaver.h"
 #include <cstring>
 #include <sstream>
@@ -122,7 +121,6 @@ LoadRes GB::load(std::string const &romfile, unsigned const flags) {
 		p_->cpu.loadSavedata();
 
 		p_->stateNo = 1;
-		p_->cpu.setOsdElement(transfer_ptr<OsdElement>());
 	}
 
 	return loadres;
@@ -162,21 +160,11 @@ bool GB::loadState(std::string const &filepath) {
 }
 
 bool GB::saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitch) {
-	if (saveState(videoBuf, pitch, statePath(p_->cpu.saveBasePath(), p_->stateNo))) {
-		p_->cpu.setOsdElement(newStateSavedOsdElement(p_->stateNo));
-		return true;
-	}
-
-	return false;
+	return saveState(videoBuf, pitch, statePath(p_->cpu.saveBasePath(), p_->stateNo));
 }
 
 bool GB::loadState() {
-	if (loadState(statePath(p_->cpu.saveBasePath(), p_->stateNo))) {
-		p_->cpu.setOsdElement(newStateLoadedOsdElement(p_->stateNo));
-		return true;
-	}
-
-	return false;
+	return loadState(statePath(p_->cpu.saveBasePath(), p_->stateNo));
 }
 
 bool GB::saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitch,
@@ -197,7 +185,6 @@ void GB::selectState(int n) {
 
 	if (p_->cpu.loaded()) {
 		std::string const &path = statePath(p_->cpu.saveBasePath(), p_->stateNo);
-		p_->cpu.setOsdElement(newSaveStateOsdElement(path, p_->stateNo));
 	}
 }
 

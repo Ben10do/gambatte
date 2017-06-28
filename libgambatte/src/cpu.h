@@ -49,10 +49,6 @@ public:
 		return mem_.saveBasePath();
 	}
 
-	void setOsdElement(transfer_ptr<OsdElement> osdElement) {
-		mem_.setOsdElement(osdElement);
-	}
-
 	LoadRes load(std::string const &romfile, bool forceDmg, bool multicartCompat) {
 		return mem_.loadROM(romfile, forceDmg, multicartCompat);
 	}

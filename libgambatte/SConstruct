@@ -20,7 +20,6 @@ sourceFiles = Split('''
 			src/loadres.cpp
 			src/memory.cpp
 			src/sound.cpp
-			src/state_osd_elements.cpp
 			src/statesaver.cpp
 			src/tima.cpp
 			src/video.cpp
