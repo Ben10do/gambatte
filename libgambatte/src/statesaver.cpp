@@ -346,20 +346,6 @@ SaverList::SaverList() {
 
 namespace {
 
-struct PxlSum { unsigned long rb, g; };
-
-static void addPxlPairs(PxlSum *const sum, uint_least32_t const *const p) {
-	sum[0].rb += (p[0] & 0xFF00FF) + (p[3] & 0xFF00FF);
-	sum[0].g  += (p[0] & 0x00FF00) + (p[3] & 0x00FF00);
-	sum[1].rb += (p[1] & 0xFF00FF) + (p[2] & 0xFF00FF);
-	sum[1].g  += (p[1] & 0x00FF00) + (p[2] & 0x00FF00);
-}
-
-static void blendPxlPairs(PxlSum *const dst, PxlSum const *const sums) {
-	dst->rb = sums[1].rb * 8 + (sums[0].rb - sums[1].rb) * 3;
-	dst->g  = sums[1].g  * 8 + (sums[0].g  - sums[1].g ) * 3;
-}
-
 static void writeSnapShot(std::ofstream &file, uint_least32_t const *pixels, std::ptrdiff_t const pitch) {
 	put24(file, pixels ? StateSaver::ss_width * StateSaver::ss_height * sizeof(uint_least32_t) : 0);
 
