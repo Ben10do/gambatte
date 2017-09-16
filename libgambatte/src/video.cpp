@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <cstring>
 
+using namespace std;
+
 namespace gambatte {
 
 void LCD::setDmgPalette(unsigned long palette[], unsigned long const dmgColors[], unsigned data) {
@@ -78,10 +80,10 @@ LCD::LCD(unsigned char const *oamram, unsigned char const *vram,
 , m2IrqStatReg_(0)
 , m1IrqStatReg_(0)
 {
-	std::memset( bgpData_, 0, sizeof  bgpData_);
-	std::memset(objpData_, 0, sizeof objpData_);
+	memset( bgpData_, 0, sizeof  bgpData_);
+	memset(objpData_, 0, sizeof objpData_);
 
-	for (std::size_t i = 0; i < sizeof dmgColorsRgb32_ / sizeof dmgColorsRgb32_[0]; ++i)
+	for (size_t i = 0; i < sizeof dmgColorsRgb32_ / sizeof dmgColorsRgb32_[0]; ++i)
 		dmgColorsRgb32_[i] = (3 - (i & 3)) * 85 * 0x010101ul;
 
 	reset(oamram, vram, false);
@@ -212,11 +214,11 @@ struct Blend {
 };
 
 template<typename T>
-static void clear(T *buf, unsigned long color, std::ptrdiff_t dpitch) {
+static void clear(T *buf, unsigned long color, ptrdiff_t dpitch) {
 	unsigned lines = 144;
 
 	while (lines--) {
-		std::fill_n(buf, 160, color);
+		fill_n(buf, 160, color);
 		buf += dpitch;
 	}
 }
@@ -876,7 +878,7 @@ void LCD::update(unsigned long const cycleCounter) {
 	ppu_.update(cycleCounter);
 }
 
-void LCD::setVideoBuffer(uint_least32_t *videoBuf, std::ptrdiff_t pitch) {
+void LCD::setVideoBuffer(uint_least32_t *videoBuf, ptrdiff_t pitch) {
 	ppu_.setFrameBuf(videoBuf, pitch);
 }
 

@@ -19,6 +19,8 @@
 #include "envelope_unit.h"
 #include <algorithm>
 
+using namespace std;
+
 namespace gambatte {
 
 EnvelopeUnit::VolOnOffEvent EnvelopeUnit::nullEvent_;
@@ -40,7 +42,7 @@ void EnvelopeUnit::saveState(SaveState::SPU::Env &estate) const {
 }
 
 void EnvelopeUnit::loadState(SaveState::SPU::Env const &estate, unsigned nr2, unsigned long cc) {
-	counter_ = std::max(estate.counter, cc);
+	counter_ = max(estate.counter, cc);
 	volume_ = estate.volume;
 	nr2_ = nr2;
 }

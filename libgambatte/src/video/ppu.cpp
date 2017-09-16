@@ -24,6 +24,7 @@
 
 namespace {
 
+using namespace std;
 using namespace gambatte;
 
 #define PREP(u8) (((u8) << 7 & 0x80) | ((u8) << 5 & 0x40) | ((u8) << 3 & 0x20) | ((u8) << 1 & 0x10) \
@@ -153,7 +154,7 @@ namespace M2 {
 	};
 
 	static void f0(PPUPriv &p) {
-		std::memset(&p.spLut, 0, sizeof p.spLut);
+		memset(&p.spLut, 0, sizeof p.spLut);
 		p.reg0 = 0;
 		p.nextSprite = 0;
 		p.nextCallPtr = &f1_;
@@ -330,7 +331,7 @@ static void doFullTilesUnrolledDmg(PPUPriv &p, int const xend, uint_least32_t *c
 			int cycles = p.cycles - 8;
 
 			if (lcdcObjEn(p)) {
-				cycles -= std::max(11 - (int(p.spriteList[nextSprite].spx) - xpos), 6);
+				cycles -= max(11 - (int(p.spriteList[nextSprite].spx) - xpos), 6);
 
 				for (unsigned i = nextSprite + 1; int(p.spriteList[i].spx) < xpos + 8; ++i)
 					cycles -= 6;
@@ -518,7 +519,7 @@ static void doFullTilesUnrolledCgb(PPUPriv &p, int const xend, uint_least32_t *c
 
 		if (int(p.spriteList[nextSprite].spx) < xpos + 8) {
 			int cycles = p.cycles - 8;
-			cycles -= std::max(11 - (int(p.spriteList[nextSprite].spx) - xpos), 6);
+			cycles -= max(11 - (int(p.spriteList[nextSprite].spx) - xpos), 6);
 
 			for (unsigned i = nextSprite + 1; int(p.spriteList[i].spx) < xpos + 8; ++i)
 				cycles -= 6;
@@ -773,7 +774,7 @@ static void doFullTilesUnrolled(PPUPriv &p) {
 		int const newxpos = p.xpos;
 
 		if (newxpos > 8) {
-			std::memcpy(dbufline, prebuf + (8 - xpos), (newxpos - 8) * sizeof *dbufline);
+			memcpy(dbufline, prebuf + (8 - xpos), (newxpos - 8) * sizeof *dbufline);
 		} else if (newxpos < 8)
 			return;
 
@@ -1328,7 +1329,7 @@ namespace StartWindowDraw {
 		unsigned cinc = 6 - fno;
 
 		if (!lcdcWinEn(p) && p.cgb) {
-			unsigned xinc = std::min<int>(cinc, std::min(endx, targetx + 1) - xpos);
+			unsigned xinc = min<int>(cinc, min(endx, targetx + 1) - xpos);
 
 			if ((lcdcObjEn(p) | p.cgb) && p.spriteList[nextSprite].spx < xpos + xinc) {
 				xpos = p.spriteList[nextSprite].spx;
@@ -1415,9 +1416,9 @@ namespace LoadSprites {
 namespace M3Start {
 	static unsigned predictCyclesUntilXpos_f1(PPUPriv const &p, unsigned xpos, unsigned ly,
 			bool weMaster, unsigned winDrawState, int targetx, unsigned cycles) {
-		cycles += std::min(unsigned(p.scx - xpos) & 7, max_m3start_cycles - xpos) + 1 - p.cgb;
+		cycles += min(unsigned(p.scx - xpos) & 7, max_m3start_cycles - xpos) + 1 - p.cgb;
 		return M3Loop::Tile::predictCyclesUntilXpos_fn(p, 0, 8 - (p.scx & 7), ly, 0,
-			weMaster, winDrawState, std::min(p.scx & 7, 5), targetx, cycles);
+			weMaster, winDrawState, min(p.scx & 7, 5), targetx, cycles);
 	}
 
 	static unsigned predictCyclesUntilXpos_f0(PPUPriv const &p, unsigned ly,
@@ -1514,8 +1515,8 @@ PPUPriv::PPUPriv(NextM0Time &nextM0Time, unsigned char const *const oamram, unsi
 , cgb(false)
 , weMaster(false)
 {
-	std::memset(spriteList, 0, sizeof spriteList);
-	std::memset(spwordList, 0, sizeof spwordList);
+	memset(spriteList, 0, sizeof spriteList);
+	memset(spwordList, 0, sizeof spwordList);
 }
 
 static void saveSpriteList(PPUPriv const &p, SaveState &ss) {
@@ -1552,9 +1553,9 @@ void PPU::saveState(SaveState &ss) const {
 
 namespace {
 
-template<class T, class K, std::size_t start, std::size_t len>
+template<class T, class K, size_t start, size_t len>
 struct BSearch {
-	static std::size_t upperBound(T const a[], K e) {
+	static size_t upperBound(T const a[], K e) {
 		if (e < a[start + len / 2])
 			return BSearch<T, K, start, len / 2>::upperBound(a, e);
 
@@ -1562,15 +1563,15 @@ struct BSearch {
 	}
 };
 
-template<class T, class K, std::size_t start>
+template<class T, class K, size_t start>
 struct BSearch<T, K, start, 0> {
-	static std::size_t upperBound(T const [], K ) {
+	static size_t upperBound(T const [], K ) {
 		return start;
 	}
 };
 
-template<std::size_t len, class T, class K>
-std::size_t upperBound(T const a[], K e) {
+template<size_t len, class T, class K>
+size_t upperBound(T const a[], K e) {
 	return BSearch<T, K, 0, len>::upperBound(a, e);
 }
 
@@ -1634,12 +1635,12 @@ static void loadSpriteList(PPUPriv &p, SaveState const &ss) {
 		}
 
 		p.spriteList[numSprites].spx = 0xFF;
-		p.nextSprite = std::min<unsigned>(ss.ppu.nextSprite, numSprites);
+		p.nextSprite = min<unsigned>(ss.ppu.nextSprite, numSprites);
 
 		while (p.spriteList[p.nextSprite].spx < ss.ppu.xpos)
 			++p.nextSprite;
 
-		p.currentSprite = std::min<unsigned>(p.nextSprite, ss.ppu.currentSprite);
+		p.currentSprite = min<unsigned>(p.nextSprite, ss.ppu.currentSprite);
 	}
 }
 
@@ -1647,7 +1648,7 @@ static void loadSpriteList(PPUPriv &p, SaveState const &ss) {
 
 void PPU::loadState(SaveState const &ss, unsigned char const *const oamram) {
 	PPUState const *const m3loopState = decodeM3LoopState(ss.ppu.state);
-	long const videoCycles = std::min(ss.ppu.videoCycles, 70223UL);
+	long const videoCycles = min(ss.ppu.videoCycles, 70223UL);
 	bool const ds = p_.cgb & ss.mem.ioamhram.get()[0x14D] >> 7;
 	long const vcycs = videoCycles - ds * m2_ds_offset < 0
 	                 ? videoCycles - ds * m2_ds_offset + 70224
@@ -1657,7 +1658,7 @@ void PPU::loadState(SaveState const &ss, unsigned char const *const oamram) {
 	p_.now = ss.cpu.cycleCounter;
 	p_.lcdc = ss.mem.ioamhram.get()[0x140];
 	p_.lyCounter.setDoubleSpeed(ds);
-	p_.lyCounter.reset(std::min(ss.ppu.videoCycles, 70223ul), ss.cpu.cycleCounter);
+	p_.lyCounter.reset(min(ss.ppu.videoCycles, 70223ul), ss.cpu.cycleCounter);
 	p_.spriteMapper.loadState(ss, oamram);
 	p_.winYPos = ss.ppu.winYPos;
 	p_.scy = ss.mem.ioamhram.get()[0x142];
@@ -1665,9 +1666,9 @@ void PPU::loadState(SaveState const &ss, unsigned char const *const oamram) {
 	p_.wy = ss.mem.ioamhram.get()[0x14A];
 	p_.wy2 = ss.ppu.oldWy;
 	p_.wx = ss.mem.ioamhram.get()[0x14B];
-	p_.xpos = std::min<int>(ss.ppu.xpos, 168);
+	p_.xpos = min<int>(ss.ppu.xpos, 168);
 	p_.endx = (p_.xpos & ~7) + (ss.ppu.endx & 7);
-	p_.endx = std::min(p_.endx <= p_.xpos ? p_.endx + 8 : p_.endx, 168);
+	p_.endx = min(p_.endx <= p_.xpos ? p_.endx + 8 : p_.endx, 168);
 	p_.reg0 = ss.ppu.reg0 & 0xFF;
 	p_.reg1 = ss.ppu.reg1 & 0xFF;
 	p_.tileword = ss.ppu.tileword & 0xFFFF;
@@ -1693,7 +1694,7 @@ void PPU::loadState(SaveState const &ss, unsigned char const *const oamram) {
 			{   &M3Start::f0_, m3StartLineCycle(p_.cgb) + 456 }
 		};
 
-		std::size_t const pos =
+		size_t const pos =
 			upperBound<sizeof lineCycleStates / sizeof *lineCycleStates - 1>(lineCycleStates, lineCycles);
 
 		p_.cycles = lineCycles - lineCycleStates[pos].cycle;

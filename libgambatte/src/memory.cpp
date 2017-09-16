@@ -23,6 +23,8 @@
 #include "video.h"
 #include <cstring>
 
+using namespace std;
+
 namespace gambatte {
 
 Memory::Memory(Interrupter const &interrupter)
@@ -115,7 +117,7 @@ void Memory::loadState(SaveState const &state) {
 	blanklcd_ = false;
 
 	if (!isCgb())
-		std::memset(cart_.vramdata() + 0x2000, 0, 0x2000);
+		memset(cart_.vramdata() + 0x2000, 0, 0x2000);
 }
 
 void Memory::setEndtime(unsigned long cc, unsigned long inc) {
@@ -1050,12 +1052,12 @@ void Memory::nontrivial_write(unsigned const p, unsigned const data, unsigned lo
 		ioamhram_[p - 0xFE00] = data;
 }
 
-LoadRes Memory::loadROM(std::string const &romfile, bool const forceDmg, bool const multicartCompat) {
+LoadRes Memory::loadROM(string const &romfile, bool const forceDmg, bool const multicartCompat) {
 	if (LoadRes const fail = cart_.loadROM(romfile, forceDmg, multicartCompat))
 		return fail;
 
 	updateCgb();
-	interrupter_.setGameShark(std::string());
+	interrupter_.setGameShark(string());
 
 	return LOADRES_OK;
 }
@@ -1065,7 +1067,7 @@ void Memory::updateCgb() {
 	lcd_.reset(ioamhram_, cart_.vramdata(), cart_.isCgb());
 }
 
-std::size_t Memory::fillSoundBuffer(unsigned long cc) {
+size_t Memory::fillSoundBuffer(unsigned long cc) {
 	psg_.generateSamples(cc, isDoubleSpeed());
 	return psg_.fillBuffer();
 }

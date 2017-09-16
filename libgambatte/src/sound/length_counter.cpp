@@ -20,6 +20,8 @@
 #include "master_disabler.h"
 #include <algorithm>
 
+using namespace std;
+
 namespace gambatte {
 
 LengthCounter::LengthCounter(MasterDisabler &disabler, unsigned const mask)
@@ -75,7 +77,7 @@ void LengthCounter::saveState(SaveState::SPU::LCounter &lstate) const {
 }
 
 void LengthCounter::loadState(SaveState::SPU::LCounter const &lstate, unsigned long const cc) {
-	counter_ = std::max(lstate.counter, cc);
+	counter_ = max(lstate.counter, cc);
 	lengthCounter_ = lstate.lengthCounter;
 }
 

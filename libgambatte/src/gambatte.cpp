@@ -30,9 +30,10 @@
 Test thoroughly or use https://github.com/sinamas/gambatte.
 #endif
 
+using namespace std;
 
-static std::string const statePath(std::string const &basePath, int stateNo) {
-	return basePath + "_" + std::to_string(stateNo) + ".gqs";
+static string const statePath(string const &basePath, int stateNo) {
+	return basePath + "_" + to_string(stateNo) + ".gqs";
 }
 
 namespace gambatte {
@@ -54,8 +55,8 @@ GB::~GB() {
 	delete p_;
 }
 
-std::ptrdiff_t GB::runFor(gambatte::uint_least32_t *const videoBuf, std::ptrdiff_t const pitch,
-                          gambatte::uint_least32_t *const soundBuf, std::size_t &samples) {
+ptrdiff_t GB::runFor(gambatte::uint_least32_t *const videoBuf, ptrdiff_t const pitch,
+                          gambatte::uint_least32_t *const soundBuf, size_t &samples) {
 	if (!p_->cpu.loaded()) {
 		samples = 0;
 		return -1;
@@ -67,7 +68,7 @@ std::ptrdiff_t GB::runFor(gambatte::uint_least32_t *const videoBuf, std::ptrdiff
 	long const cyclesSinceBlit = p_->cpu.runFor(samples * 2);
 	samples = p_->cpu.fillSoundBuffer();
 	return cyclesSinceBlit >= 0
-	     ? static_cast<std::ptrdiff_t>(samples) - (cyclesSinceBlit >> 1)
+	     ? static_cast<ptrdiff_t>(samples) - (cyclesSinceBlit >> 1)
 	     : cyclesSinceBlit;
 }
 
@@ -102,11 +103,11 @@ void GB::setInputGetter(InputGetter *getInput) {
 	p_->cpu.setInputGetter(getInput);
 }
 
-void GB::setSaveDir(std::string const &sdir) {
+void GB::setSaveDir(string const &sdir) {
 	p_->cpu.setSaveDir(sdir);
 }
 
-LoadRes GB::load(std::string const &romfile, unsigned const flags) {
+LoadRes GB::load(string const &romfile, unsigned const flags) {
 	if (p_->cpu.loaded())
 		p_->cpu.saveSavedata();
 
@@ -144,7 +145,7 @@ void GB::setDmgPaletteColor(int palNum, int colorNum, unsigned long rgb32) {
 	p_->cpu.setDmgPaletteColor(palNum, colorNum, rgb32);
 }
 
-bool GB::loadState(std::string const &filepath) {
+bool GB::loadState(string const &filepath) {
 	if (p_->cpu.loaded()) {
 		p_->cpu.saveSavedata();
 
@@ -160,7 +161,7 @@ bool GB::loadState(std::string const &filepath) {
 	return false;
 }
 
-bool GB::saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitch) {
+bool GB::saveState(gambatte::uint_least32_t const *videoBuf, ptrdiff_t pitch) {
 	return saveState(videoBuf, pitch, statePath(p_->cpu.saveBasePath(), p_->stateNo));
 }
 
@@ -168,8 +169,7 @@ bool GB::loadState() {
 	return loadState(statePath(p_->cpu.saveBasePath(), p_->stateNo));
 }
 
-bool GB::saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitch,
-                   std::string const &filepath) {
+bool GB::saveState(gambatte::uint_least32_t const *videoBuf, ptrdiff_t pitch, string const &filepath) {
 	if (p_->cpu.loaded()) {
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
@@ -186,12 +186,12 @@ void GB::selectState(int n) {
 
 int GB::currentState() const { return p_->stateNo; }
 
-std::string const GB::romTitle() const {
+string const GB::romTitle() const {
 	if (p_->cpu.loaded()) {
 		char title[0x11];
-		std::memcpy(title, p_->cpu.romTitle(), 0x10);
+		memcpy(title, p_->cpu.romTitle(), 0x10);
 		title[title[0xF] & 0x80 ? 0xF : 0x10] = '\0';
-		return std::string(title);
+		return string(title);
 	}
 
 	return "";
@@ -199,11 +199,11 @@ std::string const GB::romTitle() const {
 
 PakInfo const GB::pakInfo() const { return p_->cpu.pakInfo(p_->loadflags & MULTICART_COMPAT); }
 
-void GB::setGameGenie(std::string const &codes) {
+void GB::setGameGenie(string const &codes) {
 	p_->cpu.setGameGenie(codes);
 }
 
-void GB::setGameShark(std::string const &codes) {
+void GB::setGameShark(string const &codes) {
 	p_->cpu.setGameShark(codes);
 }
 
