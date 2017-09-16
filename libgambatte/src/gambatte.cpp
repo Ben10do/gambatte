@@ -30,14 +30,9 @@
 Test thoroughly or use https://github.com/sinamas/gambatte.
 #endif
 
-static std::string const itos(int i) {
-	std::stringstream ss;
-	ss << i;
-	return ss.str();
-}
 
 static std::string const statePath(std::string const &basePath, int stateNo) {
-	return basePath + "_" + itos(stateNo) + ".gqs";
+	return basePath + "_" + std::to_string(stateNo) + ".gqs";
 }
 
 namespace gambatte {
@@ -186,12 +181,7 @@ bool GB::saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitc
 }
 
 void GB::selectState(int n) {
-	n -= (n / 10) * 10;
-	p_->stateNo = n < 0 ? n + 10 : n;
-
-	if (p_->cpu.loaded()) {
-		std::string const &path = statePath(p_->cpu.saveBasePath(), p_->stateNo);
-	}
+	p_->stateNo = abs(n % 10);
 }
 
 int GB::currentState() const { return p_->stateNo; }
@@ -204,7 +194,7 @@ std::string const GB::romTitle() const {
 		return std::string(title);
 	}
 
-	return std::string();
+	return "";
 }
 
 PakInfo const GB::pakInfo() const { return p_->cpu.pakInfo(p_->loadflags & MULTICART_COMPAT); }

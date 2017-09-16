@@ -11,7 +11,6 @@ env = Environment(CPPPATH = ['src', 'include', '../common'],
                   variables = vars)
 
 sourceFiles = Split('''
-			src/bitmap_font.cpp
 			src/cpu.cpp
 			src/gambatte.cpp
 			src/initstate.cpp

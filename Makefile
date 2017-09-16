@@ -49,7 +49,6 @@ SDL_OBJECTS = \
 	common/videolink/vfilters/maxsthq3x.o
 
 LIB_OBJECTS = \
-	libgambatte/src/bitmap_font.o \
 	libgambatte/src/cpu.o \
 	libgambatte/src/gambatte.o \
 	libgambatte/src/initstate.o \
@@ -102,7 +101,7 @@ PKGCONFIG_CFLAGS != $(PKG_CONFIG) --cflags sdl libpng zlib
 .cpp.o:
 	$(CXX) -Ilibgambatte/src -Ilibgambatte/include \
 		-Icommon $(CXXFLAGS) -c $< -o $*.o \
-		-DHAVE_STDINT_H \
+		-DHAVE_STDINT_H -std=c++11 \
 		$(PKGCONFIG_CFLAGS)
 
 TEST_GBS = \
