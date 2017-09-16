@@ -23,6 +23,12 @@
 #include "statesaver.h"
 #include <cstring>
 #include <sstream>
+#include <climits>
+
+#if CHAR_BIT != 8
+#warning This version of Gambatte assumes that chars are 8 bits in size. \
+Test thoroughly or use https://github.com/sinamas/gambatte.
+#endif
 
 static std::string const itos(int i) {
 	std::stringstream ss;

@@ -514,12 +514,6 @@ void Cartridge::setSaveDir(std::string const &dir) {
 		saveDir_ += '/';
 }
 
-static void enforce8bit(unsigned char *data, std::size_t size) {
-	if (static_cast<unsigned char>(0x100))
-		while (size--)
-			*data++ &= 0xFF;
-}
-
 static unsigned pow2ceil(unsigned n) {
 	--n;
 	n |= n >> 1;
@@ -621,7 +615,6 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 	std::memset(memptrs_.romdata() + filesize / 0x4000 * 0x4000ul,
 	            0xFF,
 	            (rombanks - filesize / 0x4000) * 0x4000ul);
-	enforce8bit(memptrs_.romdata(), rombanks * 0x4000ul);
 
 	if (rom->fail())
 		return LOADRES_IO_ERROR;
@@ -682,7 +675,6 @@ void Cartridge::loadSavedata() {
 		if (file.is_open()) {
 			file.read(reinterpret_cast<char*>(memptrs_.rambankdata()),
 			          memptrs_.rambankdataend() - memptrs_.rambankdata());
-			enforce8bit(memptrs_.rambankdata(), memptrs_.rambankdataend() - memptrs_.rambankdata());
 		}
 	}
 
