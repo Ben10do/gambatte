@@ -583,22 +583,6 @@ LoadRes Cartridge::loadROM(string const &romfile,
 		default:   return LOADRES_BAD_FILE_OR_UNKNOWN_MBC;
 		}
 
-		/*switch (header[0x0148]) {
-		case 0x00: rombanks = 2; break;
-		case 0x01: rombanks = 4; break;
-		case 0x02: rombanks = 8; break;
-		case 0x03: rombanks = 16; break;
-		case 0x04: rombanks = 32; break;
-		case 0x05: rombanks = 64; break;
-		case 0x06: rombanks = 128; break;
-		case 0x07: rombanks = 256; break;
-		case 0x08: rombanks = 512; break;
-		case 0x52: rombanks = 72; break;
-		case 0x53: rombanks = 80; break;
-		case 0x54: rombanks = 96; break;
-		default: return -1;
-		}*/
-
 		rambanks = numRambanksFromH14x(header[0x147], header[0x149]);
 		cgb = header[0x0143] >> 7 & (1 ^ forceDmg);
 	}
