@@ -75,6 +75,18 @@ public:
 		mem_.resetMbc(multicartCompat);
 	}
 
+	bool isBootRomSet() {
+		return mem_.isBootRomSet();
+	}
+
+	bool isBootRomEnabled() {
+		return mem_.isBootRomEnabled();
+	}
+
+	void setGBBootRom(const std::string &filename) {
+		mem_.setGBBootRom(filename);
+	}
+
 private:
 	Memory mem_;
 	unsigned long cycleCounter_;

@@ -188,6 +188,13 @@ public:
 	  */
 	void setGameShark(std::string const &codes);
 
+	/**
+	 * Set the boot ROM to use when starting a game as an original Game Boy.
+	 * @param path The path to the ROM
+	 * @return success
+	 */
+	bool setDmgBootRom(const std::string &path);
+
 private:
 	struct Priv;
 	Priv *const p_;

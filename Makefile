@@ -64,6 +64,7 @@ LIB_OBJECTS = \
 	libgambatte/src/mem/memptrs.o \
 	libgambatte/src/mem/pakinfo.o \
 	libgambatte/src/mem/rtc.o \
+	libgambatte/src/mem/bootrom.o \
 	libgambatte/src/sound/channel1.o \
 	libgambatte/src/sound/channel2.o \
 	libgambatte/src/sound/channel3.o \

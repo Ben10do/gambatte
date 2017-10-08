@@ -1149,7 +1149,7 @@ static void setInitialDmgIoamhram(unsigned char ioamhram[]) {
 
 } // anon namespace
 
-void gambatte::setInitState(SaveState &state, bool const cgb, bool const gbaCgbMode) {
+void gambatte::setInitState(SaveState &state, bool const cgb, bool const gbaCgbMode, bool const isBootRomSet) {
 	static unsigned char const cgbObjpDump[0x40] = {
 		0x00, 0x00, 0xF2, 0xAB,
 		0x61, 0xC2, 0xD9, 0xBA,
@@ -1169,8 +1169,8 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const gbaCgbM
 		0x83, 0x40, 0x0B, 0x77
 	};
 
-	state.cpu.cycleCounter = cgb ? 0x102A0 : 0x102A0 + 0x8D2C;
-	state.cpu.pc = 0x100;
+	state.cpu.cycleCounter = isBootRomSet ? 0 : (cgb ? 0x102A0 : 0x102A0 + 0x8D2C);
+	state.cpu.pc = isBootRomSet ? 0 : 0x100;
 	state.cpu.sp = 0xFFFE;
 	state.cpu.a = cgb * 0x10 | 0x01;
 	state.cpu.b = cgb & gbaCgbMode;
@@ -1196,7 +1196,7 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const gbaCgbM
 	}
 
 	state.mem.ioamhram.ptr[0x104] = 0x1C;
-	state.mem.ioamhram.ptr[0x140] = 0x91;
+	state.mem.ioamhram.ptr[0x140] = isBootRomSet ? 0 : 0x91;
 	state.mem.ioamhram.ptr[0x144] = 0x00;
 
 	state.mem.divLastUpdate = 0;
@@ -1216,7 +1216,7 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const gbaCgbM
 	state.mem.enableRam = false;
 	state.mem.rambankMode = false;
 	state.mem.hdmaTransfer = false;
-
+	state.mem.bootRomEnabled = isBootRomSet;
 
 	for (int i = 0x00; i < 0x40; i += 0x02) {
 		state.ppu.bgpData.ptr[i    ] = 0xFF;
@@ -1238,7 +1238,7 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const gbaCgbM
 	memset(state.ppu.spAttribList, 0, sizeof state.ppu.spAttribList);
 	memset(state.ppu.spByte0List, 0, sizeof state.ppu.spByte0List);
 	memset(state.ppu.spByte1List, 0, sizeof state.ppu.spByte1List);
-	state.ppu.videoCycles = cgb ? 144*456ul + 164 : 153*456ul + 396;
+	state.ppu.videoCycles = isBootRomSet ? 0 : (cgb ? 144*456ul + 164 : 153*456ul + 396);
 	state.ppu.enableDisplayM0Time = state.cpu.cycleCounter;
 	state.ppu.winYPos = 0xFF;
 	state.ppu.xpos = 0;
@@ -1257,7 +1257,7 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const gbaCgbM
 	state.ppu.weMaster = false;
 	state.ppu.winDrawState = 0;
 	state.ppu.wscx = 0;
-	state.ppu.lastM0Time = 1234;
+	state.ppu.lastM0Time = /*isBootRomSet ? 0 :*/ 1234;
 	state.ppu.nextM0Irq = 0;
 	state.ppu.oldWy = state.mem.ioamhram.get()[0x14A];
 	state.ppu.pendingLcdstatIrq = false;
@@ -1269,7 +1269,11 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const gbaCgbM
 	state.spu.ch1.sweep.shadow = 0;
 	state.spu.ch1.sweep.nr0 = 0;
 	state.spu.ch1.sweep.negging = false;
-	if (cgb) {
+	if (isBootRomSet) {
+		state.spu.ch1.duty.nextPosUpdate = SoundUnit::counter_disabled;
+		state.spu.ch1.duty.pos = 0;
+		state.spu.ch1.duty.high = false;
+	} else if (cgb) {
 		state.spu.ch1.duty.nextPosUpdate = (state.spu.cycleCounter & ~1ul) + 37 * 2;
 		state.spu.ch1.duty.pos = 6;
 		state.spu.ch1.duty.high = true;

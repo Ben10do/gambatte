@@ -93,7 +93,7 @@ void GB::reset(const bool saveSaveData) {
 
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
-		setInitState(state, p_->cpu.isCgb(), p_->loadflags & GBA_CGB);
+		setInitState(state, p_->cpu.isCgb(), p_->loadflags & GBA_CGB, !p_->cpu.isCgb() && p_->cpu.isBootRomSet());
 		p_->cpu.loadState(state);
 		p_->cpu.loadSavedata();
 	}
@@ -118,7 +118,7 @@ LoadRes GB::load(string const &romfile, unsigned const flags) {
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
 		p_->loadflags = flags;
-		setInitState(state, p_->cpu.isCgb(), flags & GBA_CGB);
+		setInitState(state, p_->cpu.isCgb(), flags & GBA_CGB, !p_->cpu.isCgb() && p_->cpu.isBootRomSet());
 		p_->cpu.loadState(state);
 		p_->cpu.loadSavedata();
 
@@ -205,6 +205,21 @@ void GB::setGameGenie(string const &codes) {
 
 void GB::setGameShark(string const &codes) {
 	p_->cpu.setGameShark(codes);
+}
+
+bool GB::setDmgBootRom(const std::string &path) {
+	bool wasEnabled = p_->cpu.isBootRomEnabled();
+	try {
+		p_->cpu.setGBBootRom(path);
+
+		if (wasEnabled) {
+			reset();
+		}
+		return true;
+
+	} catch (exception) {
+		return false;
+	}
 }
 
 }

@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2008 by sinamas <sinamas at users.sourceforge.net>
+//   Copyright (C) 2017 by Ben10do <Ben10do@users.noreply.github.com>
 //
 //   This program is free software; you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License version 2 as
@@ -16,12 +16,35 @@
 //   51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 
-#ifndef INITSTATE_H
-#define INITSTATE_H
+#ifndef BOOTROM_H
+#define BOOTROM_H
+
+#include <string>
 
 namespace gambatte {
 
-void setInitState(struct SaveState &state, bool cgb, bool gbaCgbMode, bool isBootRomSet);
+class BootRom {
+public:
+	virtual ~BootRom() {};
+	virtual bool isReadInBootRom(unsigned p) = 0;
+	virtual unsigned read(unsigned p) = 0;
+	virtual bool isEnabled();
+	virtual void setEnabled(bool enabled);
+
+private:
+	bool enabled = false;
+};
+
+class GBBootRom : public BootRom {
+public:
+	GBBootRom(const std::string &filename);
+	virtual ~GBBootRom();
+	virtual bool isReadInBootRom(unsigned p);
+	virtual unsigned read(unsigned p);
+
+private:
+	unsigned char *romData;
+};
 
 }
 

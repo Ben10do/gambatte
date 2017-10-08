@@ -99,6 +99,10 @@ void Memory::loadState(SaveState const &state) {
 	                           ioamhram_[0x102] & isCgb() * 2)
 	           : 8;
 
+	if (bootRom_) {
+		bootRom_->setEnabled(state.mem.bootRomEnabled);
+	}
+
 	cart_.setVrambank(ioamhram_[0x14F] & isCgb());
 	cart_.setOamDmaSrc(oam_dma_src_off);
 	cart_.setWrambank(isCgb() && (ioamhram_[0x170] & 0x07) ? ioamhram_[0x170] & 0x07 : 1);
@@ -914,6 +918,11 @@ void Memory::nontrivial_ff_write(unsigned const p, unsigned data, unsigned long 
 		}
 
 		return;
+    case 0x50:
+        if (bootRom_) {
+            bootRom_->setEnabled(false);
+        }
+        return;
 	case 0x51:
 		dmaSource_ = data << 8 | (dmaSource_ & 0xFF);
 		return;

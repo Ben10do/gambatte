@@ -20,6 +20,7 @@
 #define MEMORY_H
 
 #include "mem/cartridge.h"
+#include "mem/bootrom.h"
 #include "interrupter.h"
 #include "pakinfo.h"
 #include "sound.h"
@@ -67,7 +68,11 @@ public:
 	}
 
 	unsigned read(unsigned p, unsigned long cc) {
-		return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc);
+        if (bootRom_ && bootRom_->isEnabled() && bootRom_->isReadInBootRom(p)) {
+            return bootRom_->read(p);
+        }
+
+        return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc);
 	}
 
 	void write(unsigned p, unsigned data, unsigned long cc) {
@@ -114,6 +119,19 @@ public:
 		cart_.setMbc(multicartCompat);
 	}
 
+	bool isBootRomSet() {
+		return bootRom_;
+	}
+
+	bool isBootRomEnabled() {
+		return bootRom_ ? bootRom_->isEnabled() : false;
+	}
+
+    void setGBBootRom(const std::string &filename) {
+        delete bootRom_;
+		bootRom_ = !filename.empty() ? new GBBootRom(filename) : nullptr;
+    }
+
 private:
 	Cartridge cart_;
 	unsigned char ioamhram_[0x200];
@@ -130,6 +148,7 @@ private:
 	unsigned char oamDmaPos_;
 	unsigned char serialCnt_;
 	bool blanklcd_;
+    BootRom *bootRom_ = nullptr;
 
 	void decEventCycles(IntEventId eventId, unsigned long dec);
 	void oamDmaInitSetup();
