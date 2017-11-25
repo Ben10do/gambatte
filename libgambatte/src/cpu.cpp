@@ -485,17 +485,17 @@ void CPU::process(unsigned long const cycles) {
 
 	unsigned char a = a_;
 	unsigned long cycleCounter = cycleCounter_;
+	bool shouldProcess = true;
 
-	while (mem_.isActive()) {
+	while (shouldProcess && mem_.isActive()) {
 		unsigned short pc = pc_;
-		bool shouldProcess = this->shouldProcess();
 
 		if (mem_.halted() || hang_) {
 			if (cycleCounter < mem_.nextEventTime()) {
 				unsigned long cycles = mem_.nextEventTime() - cycleCounter;
 				cycleCounter += cycles + (-cycles & 3);
 			}
-		} else while (cycleCounter < mem_.nextEventTime() && !hang_ && shouldProcess) {
+		} else while (cycleCounter < mem_.nextEventTime() && !hang_) {
 			unsigned char opcode;
 
 			PC_READ(opcode);
@@ -1958,14 +1958,15 @@ void CPU::process(unsigned long const cycles) {
 				hang_ = true;
 				break;
 			}
+
+			shouldProcess = this->shouldProcess();
+			if (!shouldProcess) {
+				break;
+			}
 		}
 
 		pc_ = pc;
 		cycleCounter = mem_.event(cycleCounter);
-		
-		if (!shouldProcess) {
-			break;
-		}
 	}
 
 	a_ = a;
