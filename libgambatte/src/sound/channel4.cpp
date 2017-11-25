@@ -20,6 +20,8 @@
 #include "../savestate.h"
 #include <algorithm>
 
+using namespace std;
+
 static unsigned long toPeriod(unsigned const nr3) {
 	unsigned s = (nr3 >> 4) + 3;
 	unsigned r = nr3 & 7;
@@ -121,7 +123,7 @@ void Channel4::Lfsr::saveState(SaveState &state, unsigned long cc) {
 }
 
 void Channel4::Lfsr::loadState(SaveState const &state) {
-	counter_ = backupCounter_ = std::max(state.spu.ch4.lfsr.counter, state.spu.cycleCounter);
+	counter_ = backupCounter_ = max(state.spu.ch4.lfsr.counter, state.spu.cycleCounter);
 	reg_ = state.spu.ch4.lfsr.reg;
 	master_ = state.spu.ch4.master;
 	nr3_ = state.mem.ioamhram.get()[0x122];
@@ -222,7 +224,7 @@ void Channel4::update(uint_least32_t *buf, unsigned long const soBaseVol, unsign
 
 	for (;;) {
 		unsigned long const outHigh = outBase * (envelopeUnit_.getVolume() * 2 - 15ul);
-		unsigned long const nextMajorEvent = std::min(nextEventUnit_->counter(), endCycles);
+		unsigned long const nextMajorEvent = min(nextEventUnit_->counter(), endCycles);
 		unsigned long out = lfsr_.isHighState() ? outHigh : outLow;
 
 		while (lfsr_.counter() <= nextMajorEvent) {

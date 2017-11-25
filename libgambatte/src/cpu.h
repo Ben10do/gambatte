@@ -54,10 +54,6 @@ public:
 		return mem_.saveBasePath();
 	}
 
-	void setOsdElement(transfer_ptr<OsdElement> osdElement) {
-		mem_.setOsdElement(osdElement);
-	}
-
 	LoadRes load(std::string const &romfile, bool forceDmg, bool multicartCompat) {
 		return mem_.loadROM(romfile, forceDmg, multicartCompat);
 	}
@@ -75,6 +71,26 @@ public:
 
 	void setGameGenie(std::string const &codes) { mem_.setGameGenie(codes); }
 	void setGameShark(std::string const &codes) { mem_.setGameShark(codes); }
+    
+	void resetMemorySize(bool const forceDmg) {
+		mem_.resetMemorySize(forceDmg);
+	}
+	
+	void resetMbc(bool const multicartCompat) {
+		mem_.resetMbc(multicartCompat);
+	}
+
+	bool isBootRomSet() {
+		return mem_.isBootRomSet();
+	}
+
+	bool isBootRomEnabled() {
+		return mem_.isBootRomEnabled();
+	}
+
+	void setGBBootRom(const std::string &filename) {
+		mem_.setGBBootRom(filename);
+	}
 
 	unsigned readByte(unsigned p) { return mem_.read(p, cycleCounter_); }
 	void writeByte(unsigned p, unsigned data) { mem_.write(p, data, cycleCounter_); }
@@ -95,6 +111,7 @@ private:
 	unsigned hf1, hf2, zf, cf;
 	unsigned char a_, b, c, d, e, /*f,*/ h, l;
 	bool skip_;
+	bool hang_;
 	
 	unsigned endCondition_;
 	int desiredStack_;

@@ -39,6 +39,7 @@ CPU::CPU()
 , h(0x01)
 , l(0x4D)
 , skip_(false)
+, hang_(false)
 , endCondition_(NORMAL_END)
 , desiredStack_(0)
 , skipBreakpoint_(false)
@@ -94,6 +95,7 @@ void CPU::saveState(SaveState &state) {
 	state.cpu.cycleCounter = cycleCounter_;
 	state.cpu.reg = getRegisters();
 	state.cpu.skip = skip_;
+	state.cpu.hang = hang_;
 }
 
 void CPU::loadState(SaveState const &state) {
@@ -102,6 +104,7 @@ void CPU::loadState(SaveState const &state) {
 	cycleCounter_ = state.cpu.cycleCounter;
 	setRegisters(state.cpu.reg);
 	skip_ = state.cpu.skip;
+	hang_ = state.cpu.hang;
 	
 	endCondition_ = NORMAL_END;
 	desiredStack_ = 0;
@@ -487,12 +490,12 @@ void CPU::process(unsigned long const cycles) {
 		unsigned short pc = pc_;
 		bool shouldProcess = this->shouldProcess();
 
-		if (mem_.halted()) {
+		if (mem_.halted() || hang_) {
 			if (cycleCounter < mem_.nextEventTime()) {
 				unsigned long cycles = mem_.nextEventTime() - cycleCounter;
 				cycleCounter += cycles + (-cycles & 3);
 			}
-		} else while (cycleCounter < mem_.nextEventTime() && shouldProcess) {
+		} else while (cycleCounter < mem_.nextEventTime() && !hang_ && shouldProcess) {
 			unsigned char opcode;
 
 			PC_READ(opcode);
@@ -579,7 +582,13 @@ void CPU::process(unsigned long const cycles) {
 				// stop (4 cycles):
 				// Halt CPU and LCD display until button pressed:
 			case 0x10:
-				pc = (pc + 1) & 0xFFFF;
+				unsigned char nextByte;
+				PC_READ(nextByte);
+				cycleCounter -= 4;
+				if (nextByte != 0x00) {
+					hang_ = true;
+					break;
+				}
 
 				cycleCounter = mem_.stop(cycleCounter);
 
@@ -1670,9 +1679,6 @@ void CPU::process(unsigned long const cycles) {
 
 				break;
 
-			case 0xD3: // not specified. should freeze.
-				break;
-
 				// call nc,nn (24;12 cycles):
 				// Push address of next instruction onto stack and then jump to
 				// address stored in next two bytes in memory, if CF is unset:
@@ -1737,9 +1743,6 @@ void CPU::process(unsigned long const cycles) {
 
 				break;
 
-			case 0xDB: // not specified. should freeze.
-				break;
-
 				// call z,nn (24;12 cycles):
 				// Push address of next instruction onto stack and then jump to
 				// address stored in next two bytes in memory, if CF is set:
@@ -1787,11 +1790,6 @@ void CPU::process(unsigned long const cycles) {
 				FF_WRITE(c, a);
 				break;
 
-			case 0xE3: // not specified. should freeze.
-				break;
-			case 0xE4: // not specified. should freeze.
-				break;
-
 			case 0xE5:
 				push_rr(h, l);
 				break;
@@ -1833,13 +1831,6 @@ void CPU::process(unsigned long const cycles) {
 					WRITE(immh << 8 | imml, a);
 				}
 
-				break;
-
-			case 0xEB: // not specified. should freeze.
-				break;
-			case 0xEC: // not specified. should freeze.
-				break;
-			case 0xED: // not specified. should freeze.
 				break;
 
 			case 0xEE:
@@ -1886,9 +1877,6 @@ void CPU::process(unsigned long const cycles) {
 				// di (4 cycles):
 			case 0xF3:
 				mem_.di();
-				break;
-
-			case 0xF4: // not specified. should freeze.
 				break;
 
 			case 0xF5:
@@ -1952,10 +1940,6 @@ void CPU::process(unsigned long const cycles) {
 				mem_.ei(cycleCounter);
 				break;
 
-			case 0xFC: // not specified. should freeze.
-				break;
-			case 0xFD: // not specified. should freeze
-				break;
 			case 0xFE:
 				{
 					unsigned data;
@@ -1968,6 +1952,10 @@ void CPU::process(unsigned long const cycles) {
 
 			case 0xFF:
 				rst_n(0x38);
+				break;
+				
+			default: // Invalid opcode; freeze the CPU.
+				hang_ = true;
 				break;
 			}
 		}

@@ -29,10 +29,8 @@ struct SaveState;
 
 class StateSaver {
 public:
-	enum { ss_shift = 2 };
-	enum { ss_div = 1 << 2 };
-	enum { ss_width = 160 >> ss_shift };
-	enum { ss_height = 144 >> ss_shift };
+	enum { ss_width = 160 };
+	enum { ss_height = 144 };
 
 	static bool saveState(SaveState const &state,
 			uint_least32_t const *videoBuf, std::ptrdiff_t pitch,

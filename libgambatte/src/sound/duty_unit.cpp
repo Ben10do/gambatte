@@ -19,6 +19,8 @@
 #include "duty_unit.h"
 #include <algorithm>
 
+using namespace std;
+
 static inline bool toOutState(unsigned duty, unsigned pos) {
 	return 0x7EE18180 >> (duty * 8 + pos) & 1;
 }
@@ -126,7 +128,7 @@ void DutyUnit::saveState(SaveState::SPU::Duty &dstate, unsigned long const cc) {
 
 void DutyUnit::loadState(SaveState::SPU::Duty const &dstate,
 		unsigned const nr1, unsigned const nr4, unsigned long const cc) {
-	nextPosUpdate_ = std::max(dstate.nextPosUpdate, cc);
+	nextPosUpdate_ = max(dstate.nextPosUpdate, cc);
 	pos_ = dstate.pos & 7;
 	high_ = dstate.high;
 	duty_ = nr1 >> 6;

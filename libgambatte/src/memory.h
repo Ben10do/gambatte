@@ -20,6 +20,7 @@
 #define MEMORY_H
 
 #include "mem/cartridge.h"
+#include "mem/bootrom.h"
 #include "interrupter.h"
 #include "pakinfo.h"
 #include "sound.h"
@@ -44,10 +45,6 @@ public:
 	void saveSavedata() { cart_.saveSavedata(); }
 	std::string const saveBasePath() const { return cart_.saveBasePath(); }
 
-	void setOsdElement(transfer_ptr<OsdElement> osdElement) {
-		lcd_.setOsdElement(osdElement);
-	}
-
 	unsigned long stop(unsigned long cycleCounter);
 	bool isCgb() const { return lcd_.isCgb(); }
 	bool ime() const { return intreq_.ime(); }
@@ -71,7 +68,11 @@ public:
 	}
 
 	unsigned read(unsigned p, unsigned long cc) {
-		return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc);
+        if (bootRom_ && bootRom_->isEnabled() && bootRom_->isReadInBootRom(p)) {
+            return bootRom_->read(p);
+        }
+
+        return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc);
 	}
 
 	void write(unsigned p, unsigned data, unsigned long cc) {
@@ -108,6 +109,28 @@ public:
 	void setGameGenie(std::string const &codes) { cart_.setGameGenie(codes); }
 	void setGameShark(std::string const &codes) { interrupter_.setGameShark(codes); }
 	void updateInput();
+	
+	void resetMemorySize(bool const forceDmg) {
+		cart_.setMemPtrs(forceDmg);
+		updateCgb();
+	}
+	
+	void resetMbc(bool const multicartCompat) {
+		cart_.setMbc(multicartCompat);
+	}
+
+	bool isBootRomSet() {
+		return bootRom_;
+	}
+
+	bool isBootRomEnabled() {
+		return bootRom_ ? bootRom_->isEnabled() : false;
+	}
+
+    void setGBBootRom(const std::string &filename) {
+        delete bootRom_;
+		bootRom_ = !filename.empty() ? new GBBootRom(filename) : nullptr;
+    }
 
 private:
 	Cartridge cart_;
@@ -125,6 +148,7 @@ private:
 	unsigned char oamDmaPos_;
 	unsigned char serialCnt_;
 	bool blanklcd_;
+    BootRom *bootRom_ = nullptr;
 
 	void decEventCycles(IntEventId eventId, unsigned long dec);
 	void oamDmaInitSetup();
@@ -140,6 +164,7 @@ private:
 	void updateTimaIrq(unsigned long cc);
 	void updateIrqs(unsigned long cc);
 	bool isDoubleSpeed() const { return lcd_.isDoubleSpeed(); }
+	void updateCgb();
 };
 
 }

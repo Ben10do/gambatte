@@ -20,20 +20,21 @@
 #include "cpu.h"
 #include "initstate.h"
 #include "savestate.h"
-#include "state_osd_elements.h"
 #include "statesaver.h"
 #include "gambattepriv.h"
 #include <cstring>
 #include <sstream>
+#include <climits>
 
-static std::string const itos(int i) {
-	std::stringstream ss;
-	ss << i;
-	return ss.str();
-}
+#if CHAR_BIT != 8
+#warning This version of Gambatte assumes that chars are 8 bits in size. \
+Test thoroughly or use https://github.com/sinamas/gambatte.
+#endif
 
-static std::string const statePath(std::string const &basePath, int stateNo) {
-	return basePath + "_" + itos(stateNo) + ".gqs";
+using namespace std;
+
+static string const statePath(string const &basePath, int stateNo) {
+	return basePath + "_" + to_string(stateNo) + ".gqs";
 }
 
 namespace gambatte {
@@ -47,8 +48,8 @@ GB::~GB() {
 	delete p_;
 }
 
-std::ptrdiff_t GB::runFor(gambatte::uint_least32_t *const videoBuf, std::ptrdiff_t const pitch,
-                          gambatte::uint_least32_t *const soundBuf, std::size_t &samples) {
+ptrdiff_t GB::runFor(gambatte::uint_least32_t *const videoBuf, ptrdiff_t const pitch,
+                          gambatte::uint_least32_t *const soundBuf, size_t &samples) {
 	if (!p_->cpu.loaded()) {
 		samples = 0;
 		return -1;
@@ -60,17 +61,32 @@ std::ptrdiff_t GB::runFor(gambatte::uint_least32_t *const videoBuf, std::ptrdiff
 	long const cyclesSinceBlit = p_->cpu.runFor(samples * 2);
 	samples = p_->cpu.fillSoundBuffer();
 	return cyclesSinceBlit >= 0
-	     ? static_cast<std::ptrdiff_t>(samples) - (cyclesSinceBlit >> 1)
+	     ? static_cast<ptrdiff_t>(samples) - (cyclesSinceBlit >> 1)
 	     : cyclesSinceBlit;
 }
 
-void GB::reset() {
+void GB::resetWithFlags(unsigned const flags, const bool saveSaveData) {
+	p_->loadflags = flags;
+    if (p_->cpu.loaded()) {
+        if (saveSaveData) {
+            p_->cpu.saveSavedata();
+        }
+        
+        p_->cpu.resetMemorySize(flags & FORCE_DMG);
+        p_->cpu.resetMbc(flags & MULTICART_COMPAT);
+        reset(false);
+    }
+}
+
+void GB::reset(const bool saveSaveData) {
 	if (p_->cpu.loaded()) {
-		p_->cpu.saveSavedata();
+        if (saveSaveData) {
+    		p_->cpu.saveSavedata();
+        }
 
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
-		setInitState(state, p_->cpu.isCgb(), p_->loadflags & GBA_CGB);
+		setInitState(state, p_->cpu.isCgb(), p_->loadflags & GBA_CGB, !p_->cpu.isCgb() && p_->cpu.isBootRomSet());
 		p_->cpu.loadState(state);
 		p_->cpu.loadSavedata();
 	}
@@ -80,11 +96,11 @@ void GB::setInputGetter(InputGetter *getInput) {
 	p_->cpu.setInputGetter(getInput);
 }
 
-void GB::setSaveDir(std::string const &sdir) {
+void GB::setSaveDir(string const &sdir) {
 	p_->cpu.setSaveDir(sdir);
 }
 
-LoadRes GB::load(std::string const &romfile, unsigned const flags) {
+LoadRes GB::load(string const &romfile, unsigned const flags) {
 	if (p_->cpu.loaded())
 		p_->cpu.saveSavedata();
 
@@ -95,12 +111,11 @@ LoadRes GB::load(std::string const &romfile, unsigned const flags) {
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
 		p_->loadflags = flags;
-		setInitState(state, p_->cpu.isCgb(), flags & GBA_CGB);
+		setInitState(state, p_->cpu.isCgb(), flags & GBA_CGB, !p_->cpu.isCgb() && p_->cpu.isBootRomSet());
 		p_->cpu.loadState(state);
 		p_->cpu.loadSavedata();
 
 		p_->stateNo = 1;
-		p_->cpu.setOsdElement(transfer_ptr<OsdElement>());
 	}
 
 	return loadres;
@@ -123,7 +138,7 @@ void GB::setDmgPaletteColor(int palNum, int colorNum, unsigned long rgb32) {
 	p_->cpu.setDmgPaletteColor(palNum, colorNum, rgb32);
 }
 
-bool GB::loadState(std::string const &filepath) {
+bool GB::loadState(string const &filepath) {
 	if (p_->cpu.loaded()) {
 		p_->cpu.saveSavedata();
 
@@ -139,26 +154,15 @@ bool GB::loadState(std::string const &filepath) {
 	return false;
 }
 
-bool GB::saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitch) {
-	if (saveState(videoBuf, pitch, statePath(p_->cpu.saveBasePath(), p_->stateNo))) {
-		p_->cpu.setOsdElement(newStateSavedOsdElement(p_->stateNo));
-		return true;
-	}
-
-	return false;
+bool GB::saveState(gambatte::uint_least32_t const *videoBuf, ptrdiff_t pitch) {
+	return saveState(videoBuf, pitch, statePath(p_->cpu.saveBasePath(), p_->stateNo));
 }
 
 bool GB::loadState() {
-	if (loadState(statePath(p_->cpu.saveBasePath(), p_->stateNo))) {
-		p_->cpu.setOsdElement(newStateLoadedOsdElement(p_->stateNo));
-		return true;
-	}
-
-	return false;
+	return loadState(statePath(p_->cpu.saveBasePath(), p_->stateNo));
 }
 
-bool GB::saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitch,
-                   std::string const &filepath) {
+bool GB::saveState(gambatte::uint_least32_t const *videoBuf, ptrdiff_t pitch, string const &filepath) {
 	if (p_->cpu.loaded()) {
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
@@ -170,36 +174,45 @@ bool GB::saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitc
 }
 
 void GB::selectState(int n) {
-	n -= (n / 10) * 10;
-	p_->stateNo = n < 0 ? n + 10 : n;
-
-	if (p_->cpu.loaded()) {
-		std::string const &path = statePath(p_->cpu.saveBasePath(), p_->stateNo);
-		p_->cpu.setOsdElement(newSaveStateOsdElement(path, p_->stateNo));
-	}
+	p_->stateNo = abs(n % 10);
 }
 
 int GB::currentState() const { return p_->stateNo; }
 
-std::string const GB::romTitle() const {
+string const GB::romTitle() const {
 	if (p_->cpu.loaded()) {
 		char title[0x11];
-		std::memcpy(title, p_->cpu.romTitle(), 0x10);
+		memcpy(title, p_->cpu.romTitle(), 0x10);
 		title[title[0xF] & 0x80 ? 0xF : 0x10] = '\0';
-		return std::string(title);
+		return string(title);
 	}
 
-	return std::string();
+	return "";
 }
 
 PakInfo const GB::pakInfo() const { return p_->cpu.pakInfo(p_->loadflags & MULTICART_COMPAT); }
 
-void GB::setGameGenie(std::string const &codes) {
+void GB::setGameGenie(string const &codes) {
 	p_->cpu.setGameGenie(codes);
 }
 
-void GB::setGameShark(std::string const &codes) {
+void GB::setGameShark(string const &codes) {
 	p_->cpu.setGameShark(codes);
+}
+
+bool GB::setDmgBootRom(const std::string &path) {
+	bool wasEnabled = p_->cpu.isBootRomEnabled();
+	try {
+		p_->cpu.setGBBootRom(path);
+
+		if (wasEnabled) {
+			reset();
+		}
+		return true;
+
+	} catch (exception) {
+		return false;
+	}
 }
 
 }

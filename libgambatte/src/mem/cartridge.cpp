@@ -23,6 +23,8 @@
 #include <cstring>
 #include <fstream>
 
+using namespace std;
+
 namespace gambatte {
 
 namespace {
@@ -68,11 +70,11 @@ private:
 };
 
 static inline unsigned rambanks(MemPtrs const &memptrs) {
-	return std::size_t(memptrs.rambankdataend() - memptrs.rambankdata()) / 0x2000;
+	return size_t(memptrs.rambankdataend() - memptrs.rambankdata()) / 0x2000;
 }
 
 static inline unsigned rombanks(MemPtrs const &memptrs) {
-	return std::size_t(memptrs.romdataend()     - memptrs.romdata()    ) / 0x4000;
+	return size_t(memptrs.romdataend()     - memptrs.romdata()    ) / 0x4000;
 }
 
 class Mbc1 : public DefaultMbc {
@@ -326,7 +328,7 @@ private:
 	}
 
 	void setRombank() const {
-		memptrs_.setRombank(std::max(rombank_ & (rombanks(memptrs_) - 1), 1u));
+		memptrs_.setRombank(max(rombank_ & (rombanks(memptrs_) - 1), 1u));
 	}
 };
 
@@ -484,40 +486,34 @@ void Cartridge::loadState(SaveState const &state) {
 	mbc_->loadState(state.mem);
 }
 
-static std::string const stripExtension(std::string const &str) {
-	std::string::size_type const lastDot = str.find_last_of('.');
-	std::string::size_type const lastSlash = str.find_last_of('/');
+static string const stripExtension(string const &str) {
+	string::size_type const lastDot = str.find_last_of('.');
+	string::size_type const lastSlash = str.find_last_of('/');
 
-	if (lastDot != std::string::npos && (lastSlash == std::string::npos || lastSlash < lastDot))
+	if (lastDot != string::npos && (lastSlash == string::npos || lastSlash < lastDot))
 		return str.substr(0, lastDot);
 
 	return str;
 }
 
-static std::string const stripDir(std::string const &str) {
-	std::string::size_type const lastSlash = str.find_last_of('/');
-	if (lastSlash != std::string::npos)
+static string const stripDir(string const &str) {
+	string::size_type const lastSlash = str.find_last_of('/');
+	if (lastSlash != string::npos)
 		return str.substr(lastSlash + 1);
 
 	return str;
 }
 
-std::string const Cartridge::saveBasePath() const {
+string const Cartridge::saveBasePath() const {
 	return saveDir_.empty()
 	     ? defaultSaveBasePath_
 	     : saveDir_ + stripDir(defaultSaveBasePath_);
 }
 
-void Cartridge::setSaveDir(std::string const &dir) {
+void Cartridge::setSaveDir(string const &dir) {
 	saveDir_ = dir;
 	if (!saveDir_.empty() && saveDir_[saveDir_.length() - 1] != '/')
 		saveDir_ += '/';
-}
-
-static void enforce8bit(unsigned char *data, std::size_t size) {
-	if (static_cast<unsigned char>(0x100))
-		while (size--)
-			*data++ &= 0xFF;
 }
 
 static unsigned pow2ceil(unsigned n) {
@@ -535,7 +531,7 @@ static bool presumedMulti64Mbc1(unsigned char const header[], unsigned rombanks)
 	return header[0x147] == 1 && header[0x149] == 0 && rombanks == 64;
 }
 
-LoadRes Cartridge::loadROM(std::string const &romfile,
+LoadRes Cartridge::loadROM(string const &romfile,
                            bool const forceDmg,
                            bool const multicartCompat)
 {
@@ -543,13 +539,7 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 	if (rom->fail())
 		return LOADRES_IO_ERROR;
 
-	enum Cartridgetype { type_plain,
-	                     type_mbc1,
-	                     type_mbc2,
-	                     type_mbc3,
-	                     type_mbc5,
-	                     type_huc1 };
-	Cartridgetype type = type_plain;
+	type_ = type_plain;
 	unsigned rambanks = 1;
 	unsigned rombanks = 2;
 	bool cgb = false;
@@ -559,14 +549,14 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 		rom->read(reinterpret_cast<char *>(header), sizeof header);
 
 		switch (header[0x0147]) {
-		case 0x00: type = type_plain; break;
+		case 0x00: type_ = type_plain; break;
 		case 0x01:
 		case 0x02:
-		case 0x03: type = type_mbc1; break;
+		case 0x03: type_ = type_mbc1; break;
 		case 0x05:
-		case 0x06: type = type_mbc2; break;
+		case 0x06: type_ = type_mbc2; break;
 		case 0x08:
-		case 0x09: type = type_plain; break;
+		case 0x09: type_ = type_plain; break;
 		case 0x0B:
 		case 0x0C:
 		case 0x0D: return LOADRES_UNSUPPORTED_MBC_MMM01;
@@ -574,7 +564,7 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 		case 0x10:
 		case 0x11:
 		case 0x12:
-		case 0x13: type = type_mbc3; break;
+		case 0x13: type_ = type_mbc3; break;
 		case 0x15:
 		case 0x16:
 		case 0x17: return LOADRES_UNSUPPORTED_MBC_MBC4;
@@ -583,38 +573,22 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 		case 0x1B:
 		case 0x1C:
 		case 0x1D:
-		case 0x1E: type = type_mbc5; break;
+		case 0x1E: type_ = type_mbc5; break;
 		case 0x20: return LOADRES_UNSUPPORTED_MBC_MBC6;
 		case 0x22: return LOADRES_UNSUPPORTED_MBC_MBC7;
 		case 0xFC: return LOADRES_UNSUPPORTED_MBC_POCKET_CAMERA;
 		case 0xFD: return LOADRES_UNSUPPORTED_MBC_TAMA5;
 		case 0xFE: return LOADRES_UNSUPPORTED_MBC_HUC3;
-		case 0xFF: type = type_huc1; break;
+		case 0xFF: type_ = type_huc1; break;
 		default:   return LOADRES_BAD_FILE_OR_UNKNOWN_MBC;
 		}
-
-		/*switch (header[0x0148]) {
-		case 0x00: rombanks = 2; break;
-		case 0x01: rombanks = 4; break;
-		case 0x02: rombanks = 8; break;
-		case 0x03: rombanks = 16; break;
-		case 0x04: rombanks = 32; break;
-		case 0x05: rombanks = 64; break;
-		case 0x06: rombanks = 128; break;
-		case 0x07: rombanks = 256; break;
-		case 0x08: rombanks = 512; break;
-		case 0x52: rombanks = 72; break;
-		case 0x53: rombanks = 80; break;
-		case 0x54: rombanks = 96; break;
-		default: return -1;
-		}*/
 
 		rambanks = numRambanksFromH14x(header[0x147], header[0x149]);
 		cgb = header[0x0143] >> 7 & (1 ^ forceDmg);
 	}
 
-	std::size_t const filesize = rom->size();
-	rombanks = std::max(pow2ceil(filesize / 0x4000), 2u);
+	size_t const filesize = rom->size();
+	rombanks = max(pow2ceil(filesize / 0x4000), 2u);
 
 	defaultSaveBasePath_.clear();
 	ggUndoList_.clear();
@@ -624,20 +598,31 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 
 	rom->rewind();
 	rom->read(reinterpret_cast<char*>(memptrs_.romdata()), filesize / 0x4000 * 0x4000ul);
-	std::memset(memptrs_.romdata() + filesize / 0x4000 * 0x4000ul,
-	            0xFF,
-	            (rombanks - filesize / 0x4000) * 0x4000ul);
-	enforce8bit(memptrs_.romdata(), rombanks * 0x4000ul);
+	memset(memptrs_.romdata() + filesize / 0x4000 * 0x4000ul,
+	       0xFF,
+	       (rombanks - filesize / 0x4000) * 0x4000ul);
 
 	if (rom->fail())
 		return LOADRES_IO_ERROR;
 
 	defaultSaveBasePath_ = stripExtension(romfile);
 
-	switch (type) {
+	setMbc(multicartCompat);
+
+	return LOADRES_OK;
+}
+
+void Cartridge::setMemPtrs(bool const forceDmg) {
+	unsigned rambanks = numRambanksFromH14x(memptrs_.romdata()[0x147], memptrs_.romdata()[0x149]);
+	bool cgb = memptrs_.romdata()[0x0143] >> 7 & (1 ^ forceDmg);
+    memptrs_.resetWithRomIntact(rambanks, cgb ? 8 : 2);
+}
+
+void Cartridge::setMbc(bool const multicartCompat) {
+	switch (type_) {
 	case type_plain: mbc_.reset(new Mbc0(memptrs_)); break;
 	case type_mbc1:
-		if (multicartCompat && presumedMulti64Mbc1(memptrs_.romdata(), rombanks)) {
+		if (multicartCompat && presumedMulti64Mbc1(memptrs_.romdata(), (memptrs_.romdata() - memptrs_.romdataend()) / 0x4000)) {
 			mbc_.reset(new Mbc1Multi64(memptrs_));
 		} else
 			mbc_.reset(new Mbc1(memptrs_));
@@ -650,8 +635,6 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 	case type_mbc5: mbc_.reset(new Mbc5(memptrs_)); break;
 	case type_huc1: mbc_.reset(new HuC1(memptrs_)); break;
 	}
-
-	return LOADRES_OK;
 }
 
 static bool hasBattery(unsigned char headerByte0x147) {
@@ -670,20 +653,19 @@ static bool hasBattery(unsigned char headerByte0x147) {
 }
 
 void Cartridge::loadSavedata() {
-	std::string const &sbp = saveBasePath();
+	string const &sbp = saveBasePath();
 
 	if (hasBattery(memptrs_.romdata()[0x147])) {
-		std::ifstream file((sbp + ".sav").c_str(), std::ios::binary | std::ios::in);
+		ifstream file((sbp + ".sav").c_str(), ios::binary | ios::in);
 
 		if (file.is_open()) {
 			file.read(reinterpret_cast<char*>(memptrs_.rambankdata()),
 			          memptrs_.rambankdataend() - memptrs_.rambankdata());
-			enforce8bit(memptrs_.rambankdata(), memptrs_.rambankdataend() - memptrs_.rambankdata());
 		}
 	}
 
 	if (hasRtc(memptrs_.romdata()[0x147])) {
-		std::ifstream file((sbp + ".rtc").c_str(), std::ios::binary | std::ios::in);
+		ifstream file((sbp + ".rtc").c_str(), ios::binary | ios::in);
 		if (file) {
 			unsigned long basetime =    file.get() & 0xFF;
 			basetime = basetime << 8 | (file.get() & 0xFF);
@@ -695,16 +677,16 @@ void Cartridge::loadSavedata() {
 }
 
 void Cartridge::saveSavedata() {
-	std::string const &sbp = saveBasePath();
+	string const &sbp = saveBasePath();
 
 	if (hasBattery(memptrs_.romdata()[0x147])) {
-		std::ofstream file((sbp + ".sav").c_str(), std::ios::binary | std::ios::out);
+		ofstream file((sbp + ".sav").c_str(), ios::binary | ios::out);
 		file.write(reinterpret_cast<char const *>(memptrs_.rambankdata()),
 		           memptrs_.rambankdataend() - memptrs_.rambankdata());
 	}
 
 	if (hasRtc(memptrs_.romdata()[0x147])) {
-		std::ofstream file((sbp + ".rtc").c_str(), std::ios::binary | std::ios::out);
+		ofstream file((sbp + ".rtc").c_str(), ios::binary | ios::out);
 		unsigned long const basetime = rtc_.baseTime();
 		file.put(basetime >> 24 & 0xFF);
 		file.put(basetime >> 16 & 0xFF);
@@ -717,7 +699,7 @@ static int asHex(char c) {
 	return c >= 'A' ? c - 'A' + 0xA : c - '0';
 }
 
-void Cartridge::applyGameGenie(std::string const &code) {
+void Cartridge::applyGameGenie(string const &code) {
 	if (6 < code.length()) {
 		unsigned const val = (asHex(code[0]) << 4 | asHex(code[1])) & 0xFF;
 		unsigned const addr = (    asHex(code[2])        <<  8
@@ -730,7 +712,7 @@ void Cartridge::applyGameGenie(std::string const &code) {
 			cmp = ((cmp >> 2 | cmp << 6) ^ 0x45) & 0xFF;
 		}
 
-		for (unsigned bank = 0; bank < std::size_t(memptrs_.romdataend() - memptrs_.romdata()) / 0x4000; ++bank) {
+		for (unsigned bank = 0; bank < size_t(memptrs_.romdataend() - memptrs_.romdata()) / 0x4000; ++bank) {
 			if (mbc_->isAddressWithinAreaRombankCanBeMappedTo(addr, bank)
 					&& (cmp > 0xFF || memptrs_.romdata()[bank * 0x4000ul + (addr & 0x3FFF)] == cmp)) {
 				ggUndoList_.push_back(AddrData(bank * 0x4000ul + (addr & 0x3FFF),
@@ -741,9 +723,9 @@ void Cartridge::applyGameGenie(std::string const &code) {
 	}
 }
 
-void Cartridge::setGameGenie(std::string const &codes) {
+void Cartridge::setGameGenie(string const &codes) {
 	if (loaded()) {
-		for (std::vector<AddrData>::reverse_iterator it =
+		for (vector<AddrData>::reverse_iterator it =
 				ggUndoList_.rbegin(), end = ggUndoList_.rend(); it != end; ++it) {
 			if (memptrs_.romdata() + it->addr < memptrs_.romdataend())
 				memptrs_.romdata()[it->addr] = it->data;
@@ -751,8 +733,8 @@ void Cartridge::setGameGenie(std::string const &codes) {
 
 		ggUndoList_.clear();
 
-		std::string code;
-		for (std::size_t pos = 0; pos < codes.length(); pos += code.length() + 1) {
+		string code;
+		for (size_t pos = 0; pos < codes.length(); pos += code.length() + 1) {
 			code = codes.substr(pos, codes.find(';', pos) - pos);
 			applyGameGenie(code);
 		}

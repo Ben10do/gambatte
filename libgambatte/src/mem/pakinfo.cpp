@@ -1,6 +1,8 @@
 #include "pakinfo_internal.h"
 #include <cstring>
 
+using namespace std;
+
 namespace gambatte {
 
 enum { flag_multipak = 1, flag_header_checksum_ok = 2, };
@@ -20,15 +22,16 @@ unsigned numRambanksFromH14x(unsigned char h147, unsigned char h149) {
 	case 0x00: return isMbc2(h147) ? 1 : 0;
 	case 0x01:
 	case 0x02: return 1;
+	default: case 0x03: return 4;
+	case 0x04: return 16;
+	case 0x05: return 8;
 	}
-
-	return 4;
 }
 
 PakInfo::PakInfo()
 : flags_(), rombanks_()
 {
-	std::memset(h144x_, 0 , sizeof h144x_);
+	memset(h144x_, 0 , sizeof h144x_);
 }
 
 PakInfo::PakInfo(bool multipak, unsigned rombanks, unsigned char const romheader[])
@@ -36,7 +39,7 @@ PakInfo::PakInfo(bool multipak, unsigned rombanks, unsigned char const romheader
          + isHeaderChecksumOk(romheader) * flag_header_checksum_ok),
   rombanks_(rombanks)
 {
-	std::memcpy(h144x_, romheader + 0x144, sizeof h144x_);
+	memcpy(h144x_, romheader + 0x144, sizeof h144x_);
 }
 
 bool PakInfo::headerChecksumOk() const { return flags_ & flag_header_checksum_ok; }
@@ -77,8 +80,8 @@ static char const * h147ToCstr(unsigned char const h147) {
 	return "Unknown";
 }
 
-std::string const PakInfo::mbc() const {
-	std::string h147str = h147ToCstr(h144x_[3]);
+string const PakInfo::mbc() const {
+	string h147str = h147ToCstr(h144x_[3]);
 
 	if (flags_ & flag_multipak)
 		h147str += " (Custom MultiPak)";

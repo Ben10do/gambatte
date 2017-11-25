@@ -35,6 +35,7 @@ public:
 	MemPtrs();
 	~MemPtrs();
 	void reset(unsigned rombanks, unsigned rambanks, unsigned wrambanks);
+    void resetWithRomIntact(unsigned const rambanks, unsigned const wrambanks);
 
 	unsigned char const * rmem(unsigned area) const { return rmem_[area]; }
 	unsigned char * wmem(unsigned area) const { return wmem_[area]; }

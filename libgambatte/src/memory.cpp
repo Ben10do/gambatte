@@ -23,6 +23,8 @@
 #include "video.h"
 #include <cstring>
 
+using namespace std;
+
 namespace gambatte {
 
 Memory::Memory(Interrupter const &interrupter)
@@ -97,6 +99,10 @@ void Memory::loadState(SaveState const &state) {
 	                           ioamhram_[0x102] & isCgb() * 2)
 	           : 8;
 
+	if (bootRom_) {
+		bootRom_->setEnabled(state.mem.bootRomEnabled);
+	}
+
 	cart_.setVrambank(ioamhram_[0x14F] & isCgb());
 	cart_.setOamDmaSrc(oam_dma_src_off);
 	cart_.setWrambank(isCgb() && (ioamhram_[0x170] & 0x07) ? ioamhram_[0x170] & 0x07 : 1);
@@ -115,7 +121,7 @@ void Memory::loadState(SaveState const &state) {
 	blanklcd_ = false;
 
 	if (!isCgb())
-		std::memset(cart_.vramdata() + 0x2000, 0, 0x2000);
+		memset(cart_.vramdata() + 0x2000, 0, 0x2000);
 }
 
 void Memory::setEndtime(unsigned long cc, unsigned long inc) {
@@ -912,6 +918,11 @@ void Memory::nontrivial_ff_write(unsigned const p, unsigned data, unsigned long 
 		}
 
 		return;
+    case 0x50:
+        if (bootRom_) {
+            bootRom_->setEnabled(false);
+        }
+        return;
 	case 0x51:
 		dmaSource_ = data << 8 | (dmaSource_ & 0xFF);
 		return;
@@ -1050,18 +1061,22 @@ void Memory::nontrivial_write(unsigned const p, unsigned const data, unsigned lo
 		ioamhram_[p - 0xFE00] = data;
 }
 
-LoadRes Memory::loadROM(std::string const &romfile, bool const forceDmg, bool const multicartCompat) {
+LoadRes Memory::loadROM(string const &romfile, bool const forceDmg, bool const multicartCompat) {
 	if (LoadRes const fail = cart_.loadROM(romfile, forceDmg, multicartCompat))
 		return fail;
 
-	psg_.init(cart_.isCgb());
-	lcd_.reset(ioamhram_, cart_.vramdata(), cart_.isCgb());
-	interrupter_.setGameShark(std::string());
+	updateCgb();
+	interrupter_.setGameShark(string());
 
 	return LOADRES_OK;
 }
 
-std::size_t Memory::fillSoundBuffer(unsigned long cc) {
+void Memory::updateCgb() {
+	psg_.init(cart_.isCgb());
+	lcd_.reset(ioamhram_, cart_.vramdata(), cart_.isCgb());
+}
+
+size_t Memory::fillSoundBuffer(unsigned long cc) {
 	psg_.generateSamples(cc, isDoubleSpeed());
 	return psg_.fillBuffer();
 }

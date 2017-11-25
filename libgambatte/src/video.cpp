@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <cstring>
 
+using namespace std;
+
 namespace gambatte {
 
 void LCD::setDmgPalette(unsigned long palette[], unsigned long const dmgColors[], unsigned data) {
@@ -35,9 +37,9 @@ static unsigned long gbcToRgb32(unsigned const bgr15) {
 	unsigned long const g = bgr15 >>  5 & 0x1F;
 	unsigned long const b = bgr15 >> 10 & 0x1F;
 
-	return ((r * 13 + g * 2 + b) >> 1) << 16
+	return (r * 13 + g * 2 + b) >> 1
 	     | (g * 3 + b) << 9
-	     | (r * 3 + g * 2 + b * 11) >> 1;
+	     | ((r * 3 + g * 2 + b * 11) >> 1) << 16;
 }
 
 /*static unsigned long gbcToRgb16(unsigned const bgr15) {
@@ -78,10 +80,10 @@ LCD::LCD(unsigned char const *oamram, unsigned char const *vram,
 , m2IrqStatReg_(0)
 , m1IrqStatReg_(0)
 {
-	std::memset( bgpData_, 0, sizeof  bgpData_);
-	std::memset(objpData_, 0, sizeof objpData_);
+	memset( bgpData_, 0, sizeof  bgpData_);
+	memset(objpData_, 0, sizeof objpData_);
 
-	for (std::size_t i = 0; i < sizeof dmgColorsRgb32_ / sizeof dmgColorsRgb32_[0]; ++i)
+	for (size_t i = 0; i < sizeof dmgColorsRgb32_ / sizeof dmgColorsRgb32_[0]; ++i)
 		dmgColorsRgb32_[i] = (3 - (i & 3)) * 85 * 0x010101ul;
 
 	reset(oamram, vram, false);
@@ -201,24 +203,6 @@ void LCD::refreshPalettes() {
 
 namespace {
 
-template<class Blend>
-static void blitOsdElement(uint_least32_t *d, uint_least32_t const *s,
-                           unsigned const width, unsigned h, std::ptrdiff_t const dpitch,
-                           Blend blend)
-{
-	while (h--) {
-		for (unsigned w = width; w--;) {
-			if (*s != OsdElement::pixel_transparent)
-				*d = blend(*s, *d);
-
-			++d;
-			++s;
-		}
-
-		d += dpitch - static_cast<std::ptrdiff_t>(width);
-	}
-}
-
 template<unsigned weight>
 struct Blend {
 	enum { SW = weight - 1 };
@@ -230,11 +214,11 @@ struct Blend {
 };
 
 template<typename T>
-static void clear(T *buf, unsigned long color, std::ptrdiff_t dpitch) {
+static void clear(T *buf, unsigned long color, ptrdiff_t dpitch) {
 	unsigned lines = 144;
 
 	while (lines--) {
-		std::fill_n(buf, 160, color);
+		fill_n(buf, 160, color);
 		buf += dpitch;
 	}
 }
@@ -247,26 +231,6 @@ void LCD::updateScreen(bool const blanklcd, unsigned long const cycleCounter) {
 	if (blanklcd && ppu_.frameBuf().fb()) {
 		unsigned long color = ppu_.cgb() ? gbcToRgb32(0xFFFF) : dmgColorsRgb32_[0];
 		clear(ppu_.frameBuf().fb(), color, ppu_.frameBuf().pitch());
-	}
-
-	if (ppu_.frameBuf().fb() && osdElement_) {
-		if (uint_least32_t const *const s = osdElement_->update()) {
-			uint_least32_t *const d = ppu_.frameBuf().fb()
-				+ std::ptrdiff_t(osdElement_->y()) * ppu_.frameBuf().pitch()
-				+ osdElement_->x();
-
-			switch (osdElement_->opacity()) {
-			case OsdElement::seven_eighths:
-				blitOsdElement(d, s, osdElement_->w(), osdElement_->h(),
-				               ppu_.frameBuf().pitch(), Blend<8>());
-				break;
-			case OsdElement::three_fourths:
-				blitOsdElement(d, s, osdElement_->w(), osdElement_->h(),
-				               ppu_.frameBuf().pitch(), Blend<4>());
-				break;
-			}
-		} else
-			osdElement_.reset();
 	}
 }
 
@@ -914,7 +878,7 @@ void LCD::update(unsigned long const cycleCounter) {
 	ppu_.update(cycleCounter);
 }
 
-void LCD::setVideoBuffer(uint_least32_t *videoBuf, std::ptrdiff_t pitch) {
+void LCD::setVideoBuffer(uint_least32_t *videoBuf, ptrdiff_t pitch) {
 	ppu_.setFrameBuf(videoBuf, pitch);
 }
 

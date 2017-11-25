@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2008 by sinamas <sinamas at users.sourceforge.net>
+//   Copyright (C) 2017 by Ben10do <Ben10do@users.noreply.github.com>
 //
 //   This program is free software; you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License version 2 as
@@ -16,17 +16,36 @@
 //   51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 
-#ifndef STATE_OSD_ELEMENTS_H
-#define STATE_OSD_ELEMENTS_H
+#ifndef BOOTROM_H
+#define BOOTROM_H
 
-#include "osd_element.h"
-#include "transfer_ptr.h"
 #include <string>
 
 namespace gambatte {
-transfer_ptr<OsdElement> newStateLoadedOsdElement(unsigned stateNo);
-transfer_ptr<OsdElement> newStateSavedOsdElement(unsigned stateNo);
-transfer_ptr<OsdElement> newSaveStateOsdElement(const std::string &fileName, unsigned stateNo);
+
+class BootRom {
+public:
+	virtual ~BootRom() {};
+	virtual bool isReadInBootRom(unsigned p) = 0;
+	virtual unsigned read(unsigned p) = 0;
+	virtual bool isEnabled();
+	virtual void setEnabled(bool enabled);
+
+private:
+	bool enabled = false;
+};
+
+class GBBootRom : public BootRom {
+public:
+	GBBootRom(const std::string &filename);
+	virtual ~GBBootRom();
+	virtual bool isReadInBootRom(unsigned p);
+	virtual unsigned read(unsigned p);
+
+private:
+	unsigned char *romData;
+};
+
 }
 
 #endif

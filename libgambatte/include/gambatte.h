@@ -84,12 +84,20 @@ public:
 	  */
 	std::ptrdiff_t runFor(gambatte::uint_least32_t *videoBuf, std::ptrdiff_t pitch,
 	                      gambatte::uint_least32_t *audioBuf, std::size_t &samples);
+    
+	/**
+	  * Reset to initial state, using the given LoadFlags.
+	  * Equivalent to reloading a ROM image, or turning a Game Boy Color off and on again.
+	  *
+      * @param flags    ORed combination of LoadFlags
+	  */
+	void resetWithFlags(unsigned flags, const bool saveSaveData = true);
 
 	/**
 	  * Reset to initial state.
 	  * Equivalent to reloading a ROM image, or turning a Game Boy Color off and on again.
 	  */
-	void reset();
+	void reset(const bool saveSaveData = true);
 
 	/**
 	  * @param palNum 0 <= palNum < 3. One of BG_PALETTE, SP1_PALETTE and SP2_PALETTE.
@@ -181,6 +189,13 @@ public:
 	  * @param codes Game Shark codes in format 01HHHHHH;01HHHHHH;... where H is [0-9]|[A-F]
 	  */
 	void setGameShark(std::string const &codes);
+
+	/**
+	 * Set the boot ROM to use when starting a game as an original Game Boy.
+	 * @param path The path to the ROM
+	 * @return success
+	 */
+	bool setDmgBootRom(const std::string &path);
 
 private:
 	struct Priv;

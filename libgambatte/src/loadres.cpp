@@ -1,5 +1,7 @@
 #include "loadres.h"
 
+using namespace std;
+
 namespace gambatte {
 
 static char const * to_cstr(LoadRes const loadres) {
@@ -19,6 +21,6 @@ static char const * to_cstr(LoadRes const loadres) {
 	return "";
 }
 
-std::string const to_string(LoadRes loadres) { return to_cstr(loadres); }
+string const to_string(LoadRes loadres) { return to_cstr(loadres); }
 
 }

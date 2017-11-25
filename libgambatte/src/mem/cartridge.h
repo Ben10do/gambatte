@@ -69,8 +69,17 @@ public:
 	char const * romTitle() const { return reinterpret_cast<char const *>(memptrs_.romdata() + 0x134); }
 	class PakInfo const pakInfo(bool multicartCompat) const;
 	void setGameGenie(std::string const &codes);
+	void setMemPtrs(bool const forceDmg);
+	void setMbc(bool const multicartCompat);
 
 private:
+	enum Cartridgetype { type_plain,
+	                     type_mbc1,
+	                     type_mbc2,
+	                     type_mbc3,
+	                     type_mbc5,
+	                     type_huc1 };
+	
 	struct AddrData {
 		unsigned long addr;
 		unsigned char data;
@@ -80,6 +89,7 @@ private:
 	MemPtrs memptrs_;
 	Rtc rtc_;
 	scoped_ptr<Mbc> mbc_;
+	Cartridgetype type_;
 	std::string defaultSaveBasePath_;
 	std::string saveDir_;
 	std::vector<AddrData> ggUndoList_;

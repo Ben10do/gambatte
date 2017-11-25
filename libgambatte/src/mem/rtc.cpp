@@ -19,6 +19,8 @@
 #include "rtc.h"
 #include "../savestate.h"
 
+using namespace std;
+
 namespace gambatte {
 
 Rtc::Rtc()
@@ -38,7 +40,7 @@ Rtc::Rtc()
 }
 
 void Rtc::doLatch() {
-	std::time_t tmp = (dataDh_ & 0x40 ? haltTime_ : std::time(0)) - baseTime_;
+	time_t tmp = (dataDh_ & 0x40 ? haltTime_ : time(0)) - baseTime_;
 
 	while (tmp > 0x1FF * 86400) {
 		baseTime_ += 0x1FF * 86400;
@@ -112,42 +114,42 @@ void Rtc::loadState(SaveState const &state) {
 }
 
 void Rtc::setDh(unsigned const newDh) {
-	std::time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : std::time(0);
-	std::time_t const oldHighdays = ((unixtime - baseTime_) / 86400) & 0x100;
+	time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : time(0);
+	time_t const oldHighdays = ((unixtime - baseTime_) / 86400) & 0x100;
 	baseTime_ += oldHighdays * 86400;
 	baseTime_ -= ((newDh & 0x1) << 8) * 86400;
 
 	if ((dataDh_ ^ newDh) & 0x40) {
 		if (newDh & 0x40)
-			haltTime_ = std::time(0);
+			haltTime_ = time(0);
 		else
-			baseTime_ += std::time(0) - haltTime_;
+			baseTime_ += time(0) - haltTime_;
 	}
 }
 
 void Rtc::setDl(unsigned const newLowdays) {
-	std::time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : std::time(0);
-	std::time_t const oldLowdays = ((unixtime - baseTime_) / 86400) & 0xFF;
+	time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : time(0);
+	time_t const oldLowdays = ((unixtime - baseTime_) / 86400) & 0xFF;
 	baseTime_ += oldLowdays * 86400;
 	baseTime_ -= newLowdays * 86400;
 }
 
 void Rtc::setH(unsigned const newHours) {
-	std::time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : std::time(0);
-	std::time_t const oldHours = ((unixtime - baseTime_) / 3600) % 24;
+	time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : time(0);
+	time_t const oldHours = ((unixtime - baseTime_) / 3600) % 24;
 	baseTime_ += oldHours * 3600;
 	baseTime_ -= newHours * 3600;
 }
 
 void Rtc::setM(unsigned const newMinutes) {
-	std::time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : std::time(0);
-	std::time_t const oldMinutes = ((unixtime - baseTime_) / 60) % 60;
+	time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : time(0);
+	time_t const oldMinutes = ((unixtime - baseTime_) / 60) % 60;
 	baseTime_ += oldMinutes * 60;
 	baseTime_ -= newMinutes * 60;
 }
 
 void Rtc::setS(unsigned const newSeconds) {
-	std::time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : std::time(0);
+	time_t const unixtime = dataDh_ & 0x40 ? haltTime_ : time(0);
 	baseTime_ += (unixtime - baseTime_) % 60;
 	baseTime_ -= newSeconds;
 }
