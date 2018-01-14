@@ -25,25 +25,28 @@ namespace gambatte {
 
 class BootRom {
 public:
-	virtual ~BootRom() {};
-	virtual bool isReadInBootRom(unsigned p) = 0;
-	virtual unsigned read(unsigned p) = 0;
-	virtual bool isEnabled();
+	BootRom(const std::string &filename, size_t expectedSize);
+	virtual ~BootRom();
+	virtual bool isReadInBootRom(unsigned p) const;
+	virtual unsigned read(unsigned p) const;
+	virtual bool isEnabled() const;
 	virtual void setEnabled(bool enabled);
 
 private:
+	unsigned char *romData;
 	bool enabled = false;
+	const size_t expectedSize;
 };
 
 class GBBootRom : public BootRom {
 public:
 	GBBootRom(const std::string &filename);
-	virtual ~GBBootRom();
-	virtual bool isReadInBootRom(unsigned p);
-	virtual unsigned read(unsigned p);
+};
 
-private:
-	unsigned char *romData;
+class GBCBootRom : public BootRom {
+public:
+	GBCBootRom(const std::string &filename);
+	virtual bool isReadInBootRom(unsigned p) const;
 };
 
 }

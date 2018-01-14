@@ -68,8 +68,9 @@ public:
 	}
 
 	unsigned read(unsigned p, unsigned long cc) {
-        if (bootRom_ && bootRom_->isEnabled() && bootRom_->isReadInBootRom(p)) {
-            return bootRom_->read(p);
+		auto *bootRom = getBootRom();
+        if (bootRom && bootRom->isEnabled() && bootRom->isReadInBootRom(p)) {
+            return bootRom->read(p);
         }
 
         return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc);
@@ -120,17 +121,22 @@ public:
 	}
 
 	bool isBootRomSet() {
-		return bootRom_;
+		return getBootRom();
 	}
 
 	bool isBootRomEnabled() {
-		return bootRom_ ? bootRom_->isEnabled() : false;
+		return getBootRom() ? getBootRom()->isEnabled() : false;
 	}
 
     void setGBBootRom(const std::string &filename) {
-        delete bootRom_;
-		bootRom_ = !filename.empty() ? new GBBootRom(filename) : nullptr;
+        delete gbBootRom_;
+		gbBootRom_ = !filename.empty() ? new GBBootRom(filename) : nullptr;
     }
+
+	void setGBCBootRom(const std::string &filename) {
+		delete gbcBootRom_;
+		gbcBootRom_ = !filename.empty() ? new GBCBootRom(filename) : nullptr;
+	}
 
 private:
 	Cartridge cart_;
@@ -148,7 +154,8 @@ private:
 	unsigned char oamDmaPos_;
 	unsigned char serialCnt_;
 	bool blanklcd_;
-    BootRom *bootRom_ = nullptr;
+    GBBootRom *gbBootRom_ = nullptr;
+	GBCBootRom *gbcBootRom_ = nullptr;
 
 	void decEventCycles(IntEventId eventId, unsigned long dec);
 	void oamDmaInitSetup();
@@ -165,6 +172,10 @@ private:
 	void updateIrqs(unsigned long cc);
 	bool isDoubleSpeed() const { return lcd_.isDoubleSpeed(); }
 	void updateCgb();
+
+	BootRom *getBootRom() {
+		return isCgb() ? static_cast<BootRom *>(gbcBootRom_) : gbBootRom_;
+	}
 };
 
 }

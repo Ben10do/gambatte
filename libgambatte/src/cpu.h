@@ -87,6 +87,10 @@ public:
 		mem_.setGBBootRom(filename);
 	}
 
+	void setGBCBootRom(const std::string &filename) {
+		mem_.setGBCBootRom(filename);
+	}
+
 private:
 	Memory mem_;
 	unsigned long cycleCounter_;
