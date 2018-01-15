@@ -92,6 +92,10 @@ public:
 		mem_.setGBBootRom(filename);
 	}
 
+	void setGBCBootRom(const std::string &filename) {
+		mem_.setGBCBootRom(filename);
+	}
+
 	unsigned readByte(unsigned p) { return mem_.read(p, cycleCounter_); }
 	void writeByte(unsigned p, unsigned data) { mem_.write(p, data, cycleCounter_); }
 	

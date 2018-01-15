@@ -197,6 +197,13 @@ public:
 	 */
 	bool setDmgBootRom(const std::string &path);
 
+	/**
+	 * Set the boot ROM to use when starting a game as a Game Boy Color.
+	 * @param path The path to the ROM
+	 * @return success
+	 */
+	bool setCgbBootRom(const std::string &path);
+
 private:
 	struct Priv;
 	Priv *const p_;

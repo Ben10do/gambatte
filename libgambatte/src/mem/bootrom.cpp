@@ -25,7 +25,31 @@ using namespace std;
 
 namespace gambatte {
 
-bool BootRom::isEnabled() {
+BootRom::BootRom(const string &filename, size_t expectedSize_)
+: expectedSize(expectedSize_) {
+	const scoped_ptr<File> file(newFileInstance(filename));
+
+	if (file->fail()) {
+		throw ios_base::failure("Failed to load Boot ROM");
+	}
+
+	if (file->size() < expectedSize) {
+		throw ios_base::failure("The Boot ROM is too small.");
+	}
+
+	romData = new unsigned char[expectedSize];
+	file->read(reinterpret_cast<char *>(romData), expectedSize);
+}
+
+BootRom::~BootRom() {
+	delete []romData;
+}
+
+unsigned BootRom::read(unsigned p) const {
+	return romData[p];
+}
+
+bool BootRom::isEnabled() const {
 	return enabled;
 }
 
@@ -33,31 +57,22 @@ void BootRom::setEnabled(bool enabled) {
 	this->enabled = enabled;
 }
 
-GBBootRom::GBBootRom(const std::string &filename) {
-	const scoped_ptr<File> file(newFileInstance(filename));
-
-	if (file->fail()) {
-		throw ios_base::failure("Failed to load Boot ROM");
-	}
-
-	if (file->size() < 0x100) {
-		throw ios_base::failure("The Boot ROM is too small.");
-	}
-
-	romData = new unsigned char[0x100];
-	file->read(reinterpret_cast<char *>(romData), 0x100);
+bool BootRom::isReadInBootRom(unsigned p) const {
+	return p < expectedSize;
 }
 
-GBBootRom::~GBBootRom() {
-	delete []romData;
+GBBootRom::GBBootRom(const string &filename)
+: BootRom(filename, 0x100) {
+
 }
 
-bool GBBootRom::isReadInBootRom(unsigned p) {
-	return p < 0x100;
+GBCBootRom::GBCBootRom(const string &filename)
+: BootRom(filename, 0x900) {
+
 }
 
-unsigned GBBootRom::read(unsigned p) {
-	return romData[p];
+bool GBCBootRom::isReadInBootRom(unsigned p) const {
+	return (p < 0x100 || p >= 0x200) && BootRom::isReadInBootRom(p);
 }
 
 }
