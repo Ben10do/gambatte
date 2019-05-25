@@ -31,11 +31,15 @@ Test thoroughly or use https://github.com/sinamas/gambatte.
 #endif
 
 
-static std::string const statePath(std::string const &basePath, int stateNo) {
-	return basePath + "_" + std::to_string(stateNo) + ".gqs";
+using namespace gambatte;
+
+namespace {
+
+std::string statePath(std::string const &basePath, int stateNo) {
+    return basePath + '_' + std::to_string(stateNo) + ".gqs";
 }
 
-namespace gambatte {
+}
 
 struct GB::Priv {
 	CPU cpu;
@@ -235,6 +239,4 @@ bool GB::setCgbBootRom(const std::string &path) {
 	} catch (std::exception&) {
 		return false;
 	}
-}
-
 }

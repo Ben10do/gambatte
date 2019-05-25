@@ -23,7 +23,7 @@
 #include "minkeeper.h"
 #include "scoped_ptr.h"
 #include "video/lyc_irq.h"
-#include "video/m0_irq.h"
+#include "video/mstat_irq.h"
 #include "video/next_m0_time.h"
 #include "video/ppu.h"
 
@@ -38,6 +38,7 @@ public:
 
 	void flagHdmaReq() const { gambatte::flagHdmaReq(intreq_); }
 	void flagIrq(unsigned bit) const { intreq_.flagIrq(bit); }
+	void flagIrq(unsigned bit, unsigned long cc) const { intreq_.flagIrq(bit, cc); }
 	void setNextEventTime(unsigned long time) const { intreq_.setEventTime<intevent_video>(time); }
 
 private:
@@ -58,19 +59,19 @@ public:
 	void dmgBgPaletteChange(unsigned data, unsigned long cycleCounter) {
 		update(cycleCounter);
 		bgpData_[0] = data;
-		setDmgPalette(ppu_.bgPalette(), dmgColorsRgb32_, data);
+		setDmgPalette(ppu_.bgPalette(), dmgColorsRgb32_[0], data);
 	}
 
 	void dmgSpPalette1Change(unsigned data, unsigned long cycleCounter) {
 		update(cycleCounter);
 		objpData_[0] = data;
-		setDmgPalette(ppu_.spPalette(), dmgColorsRgb32_ + 4, data);
+		setDmgPalette(ppu_.spPalette(), dmgColorsRgb32_[1], data);
 	}
 
 	void dmgSpPalette2Change(unsigned data, unsigned long cycleCounter) {
 		update(cycleCounter);
 		objpData_[1] = data;
-		setDmgPalette(ppu_.spPalette() + 4, dmgColorsRgb32_ + 8, data);
+		setDmgPalette(ppu_.spPalette() + num_palette_entries, dmgColorsRgb32_[2], data);
 	}
 
 	void cgbBgColorChange(unsigned index, unsigned data, unsigned long cycleCounter) {
@@ -84,11 +85,11 @@ public:
 	}
 
 	unsigned cgbBgColorRead(unsigned index, unsigned long cycleCounter) {
-		return ppu_.cgb() & cgbpAccessible(cycleCounter) ? bgpData_[index] : 0xFF;
+		return ppu_.cgb() && cgbpAccessible(cycleCounter) ? bgpData_[index] : 0xFF;
 	}
 
 	unsigned cgbSpColorRead(unsigned index, unsigned long cycleCounter) {
-		return ppu_.cgb() & cgbpAccessible(cycleCounter) ? objpData_[index] : 0xFF;
+		return ppu_.cgb() && cgbpAccessible(cycleCounter) ? objpData_[index] : 0xFF;
 	}
 
 	void updateScreen(bool blanklcd, unsigned long cc);
@@ -114,15 +115,13 @@ public:
 				update(cc);
 
 			lyReg = ppu_.lyCounter().ly();
-
-			if (lyReg == 153) {
-				if (isDoubleSpeed()) {
-					if (ppu_.lyCounter().time() - cc <= 456 * 2 - 8)
-						lyReg = 0;
-				} else
+			if (lyReg == lcd_lines_per_frame - 1) {
+				if (ppu_.lyCounter().time() - cc <= 2 * lcd_cycles_per_line - 4)
 					lyReg = 0;
-			} else if (ppu_.lyCounter().time() - cc <= 4)
+			} else if (ppu_.lyCounter().time() - cc <= 8
+					&& ppu_.lyCounter().time() - cc <= 4u * (1 + isDoubleSpeed())) {
 				++lyReg;
+			}
 		}
 
 		return lyReg;
@@ -179,6 +178,7 @@ private:
 		void set(MemEvent e, unsigned long time) { memEventMin_.setValue(e, time); setMemEvent(); }
 
 		void flagIrq(unsigned bit) { memEventRequester_.flagIrq(bit); }
+		void flagIrq(unsigned bit, unsigned long cc) { memEventRequester_.flagIrq(bit, cc); }
 		void flagHdmaReq() { memEventRequester_.flagHdmaReq(); }
 
 	private:
@@ -194,16 +194,14 @@ private:
 	};
 
 	PPU ppu_;
-	unsigned long dmgColorsRgb32_[3 * 4];
-	unsigned char  bgpData_[8 * 8];
-	unsigned char objpData_[8 * 8];
+	unsigned long dmgColorsRgb32_[3][num_palette_entries];
+	unsigned char  bgpData_[2 * max_num_palettes * num_palette_entries];
+	unsigned char objpData_[2 * max_num_palettes * num_palette_entries];
 	EventTimes eventTimes_;
-	M0Irq m0Irq_;
+	MStatIrqEvent mstatIrq_;
 	LycIrq lycIrq_;
 	NextM0Time nextM0Time_;
 	unsigned char statReg_;
-	unsigned char m2IrqStatReg_;
-	unsigned char m1IrqStatReg_;
 
 	static void setDmgPalette(unsigned long palette[],
 	                          unsigned long const dmgColors[],
@@ -216,7 +214,7 @@ private:
 	bool cgbpAccessible(unsigned long cycleCounter);
 	bool lycRegChangeStatTriggerBlockedByM0OrM1Irq(unsigned long cc);
 	bool lycRegChangeTriggersStatIrq(unsigned old, unsigned data, unsigned long cc);
-	bool statChangeTriggersM0LycOrM1StatIrqCgb(unsigned old, unsigned data, unsigned long cc);
+	bool statChangeTriggersM0LycOrM1StatIrqCgb(unsigned old, unsigned data, bool lycperiod, unsigned long cc);
 	bool statChangeTriggersStatIrqCgb(unsigned old, unsigned data, unsigned long cc);
 	bool statChangeTriggersStatIrqDmg(unsigned old, unsigned long cc);
 	bool statChangeTriggersStatIrq(unsigned old, unsigned data, unsigned long cc);

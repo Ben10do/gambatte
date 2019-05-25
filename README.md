@@ -3,7 +3,8 @@ Gambatte
 
 About
 --------------------------------------------------------------------------------
-Gambatte is a portable, open-source Game Boy Color emulator.
+Gambatte is a work-in-progress, portable, open-source, Game Boy Color emulator,
+and reverse engineering project, written with a wish to preserve something.
 
 The core emulation code is contained in a separate library backend
 (`libgambatte`) written in platform-independent C++. There is currently a Qt GUI

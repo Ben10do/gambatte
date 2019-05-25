@@ -129,9 +129,9 @@ void CPU::loadState(SaveState const &state) {
 // time they were written GCC had a tendency to not be able to keep hot variables
 // in regs if you took an address/reference in an inline function.
 
-#define bc() ( b << 8 | c )
-#define de() ( d << 8 | e )
-#define hl() ( h << 8 | l )
+#define bc() ( b * 0x100u | c )
+#define de() ( d * 0x100u | e )
+#define hl() ( h * 0x100u | l )
 
 #define READ(dest, addr) do { (dest) = mem_.read(addr, cycleCounter); cycleCounter += 4; } while (0)
 #define PC_READ(dest) do { (dest) = mem_.read(pc, cycleCounter); pc = (pc + 1) & 0xFFFF; cycleCounter += 4; } while (0)
@@ -190,7 +190,7 @@ void CPU::loadState(SaveState const &state) {
 // Rotate 8-bit register right through CF, store old bit0 in CF, old CF value becomes bit7. Reset SF and HCF, Check ZF:
 #define rr_r(r) do { \
 	unsigned const oldcf = cf & 0x100; \
-	cf = (r) << 8; \
+	cf = (r) * 0x100u; \
 	(r) = zf = ((r) | oldcf) >> 1; \
 	hf2 = 0; \
 } while (0)
@@ -206,7 +206,7 @@ void CPU::loadState(SaveState const &state) {
 // sra r (8 cycles):
 // Shift 8-bit register right, store old bit0 in CF. bit7=old bit7. Reset SF and HCF, Check ZF:
 #define sra_r(r) do { \
-	cf = (r) << 8; \
+	cf = (r) * 0x100u; \
 	zf = (r) >> 1; \
 	(r) = zf | ((r) & 0x80); \
 	hf2 = 0; \
@@ -216,7 +216,7 @@ void CPU::loadState(SaveState const &state) {
 // Shift 8-bit register right, store old bit0 in CF. Reset SF and HCF, Check ZF:
 #define srl_r(r) do { \
 	zf = (r); \
-	cf = (r) << 8; \
+	cf = (r) * 0x100u; \
 	zf >>= 1; \
 	(r) = zf; \
 	hf2 = 0; \
@@ -277,7 +277,7 @@ void CPU::loadState(SaveState const &state) {
 	unsigned const hl = hl(); \
 	unsigned val; \
 	READ(val, hl); \
-	val &= ~(1 << (n)); \
+	val &= ~(1u << (n)); \
 	WRITE(hl, val); \
 } while (0)
 
@@ -293,8 +293,8 @@ void CPU::loadState(SaveState const &state) {
 // push rr (16 cycles):
 // Push value of register pair onto stack:
 #define push_rr(r1, r2) do { \
-	PUSH(r1, r2); \
 	cycleCounter += 4; \
+	PUSH(r1, r2); \
 } while (0)
 
 // pop rr (12 cycles):
@@ -477,8 +477,8 @@ void CPU::loadState(SaveState const &state) {
 // rst n (16 Cycles):
 // Push present address onto stack, jump to address n (one of 00h,08h,10h,18h,20h,28h,30h,38h):
 #define rst_n(n) do { \
-	PUSH(pc >> 8, pc & 0xFF); \
-	PC_MOD(n); \
+	push_rr(pc >> 8, pc & 0xFF); \
+	pc = (n); \
 } while (0)
 
 // ret (16 cycles):
@@ -582,7 +582,7 @@ void CPU::process(unsigned long const cycles) {
 				// rrca (4 cycles):
 				// Rotate 8-bit register A right, store old bit0 in CF. Reset SF, HCF, ZF:
 			case 0x0F:
-				cf = a << 8 | a;
+				cf = a * 0x100u | a;
 				a = cf >> 1 & 0xFF;
 				hf2 = 0;
 				zf = 1;
@@ -669,7 +669,7 @@ void CPU::process(unsigned long const cycles) {
 			case 0x1F:
 				{
 					unsigned oldcf = cf & 0x100;
-					cf = a << 8;
+					cf = a * 0x100u;
 					a = (a | oldcf) >> 1;
 				}
 
@@ -1003,17 +1003,14 @@ void CPU::process(unsigned long const cycles) {
 			case 0x74: WRITE(hl(), h); break;
 			case 0x75: WRITE(hl(), l); break;
 
-				// halt (4 cycles):
+				// halt (4n cycles):
 			case 0x76:
-				if (!mem_.ime()
-					&& (   mem_.ff_read(0x0F, cycleCounter)
-					     & mem_.ff_read(0xFF, cycleCounter) & 0x1F)) {
-					if (mem_.isCgb())
-						cycleCounter += 4;
-					else
-						skip_ = true;
+				if (mem_.pendingIrqs(cycleCounter)) {
+					pc = (pc - mem_.ime()) & 0xFFFF;
+					skip_ = !mem_.ime();
 				} else {
 					mem_.halt();
+					cycleCounter += 8 * !mem_.isCgb();
 
 					if (cycleCounter < mem_.nextEventTime()) {
 						unsigned long cycles = mem_.nextEventTime() - cycleCounter;
