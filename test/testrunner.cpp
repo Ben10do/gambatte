@@ -53,9 +53,9 @@ static void readPng(gambatte::uint_least32_t out[], std::FILE &file) {
 
 	for (std::size_t y = 0; y < gb_height; ++y)
 	for (std::size_t x = 0; x < gb_width; ++x) {
-		out[y * gb_width + x] = rows[y][x * 4]
+		out[y * gb_width + x] = rows[y][x * 4] << 16
 			| rows[y][x * 4 + 1] << 8
-			| rows[y][x * 4 + 2] << 16;
+			| rows[y][x * 4 + 2];
 	}
 }
 
