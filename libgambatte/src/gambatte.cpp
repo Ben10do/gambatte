@@ -217,7 +217,7 @@ bool GB::setDmgBootRom(const std::string &path) {
 		}
 		return true;
 
-	} catch (std::exception) {
+	} catch (std::exception&) {
 		return false;
 	}
 }
@@ -232,7 +232,7 @@ bool GB::setCgbBootRom(const std::string &path) {
 		}
 		return true;
 
-	} catch (std::exception) {
+	} catch (std::exception&) {
 		return false;
 	}
 }
