@@ -20,8 +20,6 @@
 #include "../savestate.h"
 #include <algorithm>
 
-using namespace std;
-
 namespace gambatte {
 
 Channel1::SweepUnit::SweepUnit(MasterDisabler &disabler, DutyUnit &dutyUnit)
@@ -101,7 +99,7 @@ void Channel1::SweepUnit::saveState(SaveState &state) const {
 }
 
 void Channel1::SweepUnit::loadState(SaveState const &state) {
-	counter_ = max(state.spu.ch1.sweep.counter, state.spu.cycleCounter);
+	counter_ = std::max(state.spu.ch1.sweep.counter, state.spu.cycleCounter);
 	shadow_ = state.spu.ch1.sweep.shadow;
 	nr0_ = state.spu.ch1.sweep.nr0;
 	negging_ = state.spu.ch1.sweep.negging;
@@ -225,7 +223,7 @@ void Channel1::update(uint_least32_t *buf, unsigned long const soBaseVol, unsign
 		unsigned long const outHigh = master_
 		                            ? outBase * (envelopeUnit_.getVolume() * 2 - 15ul)
 		                            : outLow;
-		unsigned long const nextMajorEvent = min(nextEventUnit_->counter(), endCycles);
+		unsigned long const nextMajorEvent = std::min(nextEventUnit_->counter(), endCycles);
 		unsigned long out = dutyUnit_.isHighState() ? outHigh : outLow;
 
 		while (dutyUnit_.counter() <= nextMajorEvent) {

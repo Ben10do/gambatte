@@ -19,8 +19,6 @@
 #include "interrupter.h"
 #include "memory.h"
 
-using namespace std;
-
 namespace gambatte {
 
 Interrupter::Interrupter(unsigned short &sp, unsigned short &pc)
@@ -49,11 +47,11 @@ static int asHex(char c) {
 	return c >= 'A' ? c - 'A' + 0xA : c - '0';
 }
 
-void Interrupter::setGameShark(string const &codes) {
-	string code;
+void Interrupter::setGameShark(std::string const &codes) {
+	std::string code;
 	gsCodes_.clear();
 
-	for (size_t pos = 0; pos < codes.length(); pos += code.length() + 1) {
+	for (std::size_t pos = 0; pos < codes.length(); pos += code.length() + 1) {
 		code = codes.substr(pos, codes.find(';', pos) - pos);
 		if (code.length() >= 8) {
 			GsCode gs;
@@ -69,7 +67,7 @@ void Interrupter::setGameShark(string const &codes) {
 }
 
 void Interrupter::applyVblankCheats(unsigned long const cc, Memory &memory) {
-	for (size_t i = 0, size = gsCodes_.size(); i < size; ++i) {
+	for (std::size_t i = 0, size = gsCodes_.size(); i < size; ++i) {
 		if (gsCodes_[i].type == 0x01)
 			memory.write(gsCodes_[i].address, gsCodes_[i].value, cc);
 	}

@@ -20,8 +20,6 @@
 #include <algorithm>
 #include <cstring>
 
-using namespace std;
-
 namespace gambatte {
 
 MemPtrs::MemPtrs()
@@ -58,7 +56,7 @@ void MemPtrs::reset(unsigned const rombanks, unsigned const rambanks, unsigned c
 	wramdata_[0] = rambankdata_ + rambanks * 0x2000ul;
 	wramdataend_ = wramdata_[0] + wrambanks * 0x1000ul;
 
-	memset(rdisabledRamw(), 0xFF, 0x2000);
+	std::memset(rdisabledRamw(), 0xFF, 0x2000);
 
 	oamDmaSrc_ = oam_dma_src_off;
 	rmem_[0x3] = rmem_[0x2] = rmem_[0x1] = rmem_[0x0] = romdata_[0];
@@ -81,7 +79,7 @@ void MemPtrs::resetWithRomIntact(unsigned const rambanks, unsigned const wramban
 		+ wrambanks * 0x1000ul
 		+ 0x4000];
 	
-	copy(memchunk_, rambankdata_, newmemchunk);
+	std::copy(memchunk_, rambankdata_, newmemchunk);
 	delete []memchunk_;
 	memchunk_ = newmemchunk;
 		
@@ -90,7 +88,7 @@ void MemPtrs::resetWithRomIntact(unsigned const rambanks, unsigned const wramban
 	wramdata_[0] = rambankdata_ + rambanks * 0x2000ul;
 	wramdataend_ = wramdata_[0] + wrambanks * 0x1000ul;
 	
-	memset(rdisabledRamw(), 0xFF, 0x2000);
+	std::memset(rdisabledRamw(), 0xFF, 0x2000);
 	
 	oamDmaSrc_ = oam_dma_src_off;
 	rmem_[0x3] = rmem_[0x2] = rmem_[0x1] = rmem_[0x0] = romdata_[0];
@@ -156,15 +154,15 @@ void MemPtrs::disconnectOamDmaAreas() {
 		case oam_dma_src_rom:  // fall through
 		case oam_dma_src_sram:
 		case oam_dma_src_invalid:
-			fill(rmem_, rmem_ + 8, nullptr);
-			rmem_[0xB] = rmem_[0xA] = nullptr;
-			wmem_[0xB] = wmem_[0xA] = nullptr;
+			std::fill(rmem_, rmem_ + 8, static_cast<unsigned char *>(0));
+			rmem_[0xB] = rmem_[0xA] = 0;
+			wmem_[0xB] = wmem_[0xA] = 0;
 			break;
 		case oam_dma_src_vram:
 			break;
 		case oam_dma_src_wram:
-			rmem_[0xE] = rmem_[0xD] = rmem_[0xC] = nullptr;
-			wmem_[0xE] = wmem_[0xD] = wmem_[0xC] = nullptr;
+			rmem_[0xE] = rmem_[0xD] = rmem_[0xC] = 0;
+			wmem_[0xE] = wmem_[0xD] = wmem_[0xC] = 0;
 			break;
 		case oam_dma_src_off:
 			break;
@@ -175,11 +173,11 @@ void MemPtrs::disconnectOamDmaAreas() {
 		case oam_dma_src_sram:
 		case oam_dma_src_wram:
 		case oam_dma_src_invalid:
-			fill(rmem_, rmem_ + 8, nullptr);
-			rmem_[0xB] = rmem_[0xA] = nullptr;
-			wmem_[0xB] = wmem_[0xA] = nullptr;
-			rmem_[0xE] = rmem_[0xD] = rmem_[0xC] = nullptr;
-			wmem_[0xE] = wmem_[0xD] = wmem_[0xC] = nullptr;
+			std::fill(rmem_, rmem_ + 8, static_cast<unsigned char *>(0));
+			rmem_[0xB] = rmem_[0xA] = 0;
+			wmem_[0xB] = wmem_[0xA] = 0;
+			rmem_[0xE] = rmem_[0xD] = rmem_[0xC] = 0;
+			wmem_[0xE] = wmem_[0xD] = wmem_[0xC] = 0;
 			break;
 		case oam_dma_src_vram:
 			break;

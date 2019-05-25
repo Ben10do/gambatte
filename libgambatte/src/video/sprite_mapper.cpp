@@ -23,8 +23,6 @@
 #include <algorithm>
 #include <cstring>
 
-using namespace std;
-
 namespace {
 
 class SpxLess {
@@ -57,7 +55,7 @@ void SpriteMapper::OamReader::reset(unsigned char const *const oamram, bool cons
 	setLargeSpritesSrc(false);
 	lu_ = 0;
 	lastChange_ = 0xFF;
-	fill(szbuf_, szbuf_ + 40, largeSpritesSrc_);
+	std::fill(szbuf_, szbuf_ + 40, largeSpritesSrc_);
 
 	unsigned pos = 0;
 	unsigned distance = 80;
@@ -79,12 +77,12 @@ void SpriteMapper::OamReader::update(unsigned long const cc) {
 	if (cc > lu_) {
 		if (changed()) {
 			unsigned const lulc = toPosCycles(lu_, lyCounter_);
-			unsigned pos = min(lulc, 80u);
+			unsigned pos = std::min(lulc, 80u);
 			unsigned distance = 80;
 
 			if ((cc - lu_) >> lyCounter_.isDoubleSpeed() < 456) {
 				unsigned cclc = toPosCycles(cc, lyCounter_);
-				distance = min(cclc, 80u) - pos + (cclc < lulc ? 80 : 0);
+				distance = std::min(cclc, 80u) - pos + (cclc < lulc ? 80 : 0);
 			}
 
 			{
@@ -119,7 +117,7 @@ void SpriteMapper::OamReader::update(unsigned long const cc) {
 
 void SpriteMapper::OamReader::change(unsigned long cc) {
 	update(cc);
-	lastChange_ = min(toPosCycles(lu_, lyCounter_), 80u);
+	lastChange_ = std::min(toPosCycles(lu_, lyCounter_), 80u);
 }
 
 void SpriteMapper::OamReader::setStatePtrs(SaveState &state) {
@@ -135,8 +133,8 @@ void SpriteMapper::OamReader::loadState(SaveState const &ss, unsigned char const
 }
 
 void SpriteMapper::OamReader::enableDisplay(unsigned long cc) {
-	memset(buf_, 0x00, sizeof buf_);
-	fill(szbuf_, szbuf_ + 40, false);
+	std::memset(buf_, 0x00, sizeof buf_);
+	std::fill(szbuf_, szbuf_ + 40, false);
 	lu_ = cc + (80 << lyCounter_.isDoubleSpeed());
 	lastChange_ = 80;
 }
@@ -156,7 +154,7 @@ void SpriteMapper::reset(unsigned char const *oamram, bool cgb) {
 }
 
 void SpriteMapper::clearMap() {
-	memset(num_, need_sorting_mask, sizeof num_);
+	std::memset(num_, need_sorting_mask, sizeof num_);
 }
 
 void SpriteMapper::mapSprites() {
@@ -167,10 +165,10 @@ void SpriteMapper::mapSprites() {
 		unsigned const bottomPos = posbuf()[i] - (17u - spriteHeight);
 
 		if (bottomPos < 143u + spriteHeight) {
-			unsigned const startly = max(int(bottomPos) + 1 - spriteHeight, 0);
+			unsigned const startly = std::max(int(bottomPos) + 1 - spriteHeight, 0);
 			unsigned char *map = spritemap_ + startly * 10;
 			unsigned char *n   = num_       + startly;
-			unsigned char *const nend = num_ + min(bottomPos, 143u) + 1;
+			unsigned char *const nend = num_ + std::min(bottomPos, 143u) + 1;
 
 			do {
 				if (*n < need_sorting_mask + 10)

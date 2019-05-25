@@ -25,73 +25,71 @@
 #include <vector>
 #include <cstring>
 
-using namespace std;
-
 namespace {
 
 using namespace gambatte;
 
 struct Saver {
 	char const *label;
-	void (*save)(ofstream &file, SaveState const &state);
-	void (*load)(ifstream &file, SaveState &state);
-	size_t labelsize;
+	void (*save)(std::ofstream &file, SaveState const &state);
+	void (*load)(std::ifstream &file, SaveState &state);
+	std::size_t labelsize;
 };
 
 static inline bool operator<(Saver const &l, Saver const &r) {
-	return strcmp(l.label, r.label) < 0;
+	return std::strcmp(l.label, r.label) < 0;
 }
 
-static void put24(ofstream &file, unsigned long data) {
+static void put24(std::ofstream &file, unsigned long data) {
 	file.put(data >> 16 & 0xFF);
 	file.put(data >>  8 & 0xFF);
 	file.put(data       & 0xFF);
 }
 
-static void put32(ofstream &file, unsigned long data) {
+static void put32(std::ofstream &file, unsigned long data) {
 	file.put(data >> 24 & 0xFF);
 	file.put(data >> 16 & 0xFF);
 	file.put(data >>  8 & 0xFF);
 	file.put(data       & 0xFF);
 }
 
-static void write(ofstream &file, unsigned char data) {
+static void write(std::ofstream &file, unsigned char data) {
 	static char const inf[] = { 0x00, 0x00, 0x01 };
 	file.write(inf, sizeof inf);
 	file.put(data & 0xFF);
 }
 
-static void write(ofstream &file, unsigned short data) {
+static void write(std::ofstream &file, unsigned short data) {
 	static char const inf[] = { 0x00, 0x00, 0x02 };
 	file.write(inf, sizeof inf);
 	file.put(data >> 8 & 0xFF);
 	file.put(data      & 0xFF);
 }
 
-static void write(ofstream &file, unsigned long data) {
+static void write(std::ofstream &file, unsigned long data) {
 	static char const inf[] = { 0x00, 0x00, 0x04 };
 	file.write(inf, sizeof inf);
 	put32(file, data);
 }
 
-static void write(ofstream &file, unsigned char const *data, size_t size) {
+static void write(std::ofstream &file, unsigned char const *data, std::size_t size) {
 	put24(file, size);
 	file.write(reinterpret_cast<char const *>(data), size);
 }
 
-static void write(ofstream &file, bool const *data, size_t size) {
+static void write(std::ofstream &file, bool const *data, std::size_t size) {
 	put24(file, size);
-	for_each(data, data + size,
-		bind1st(mem_fun(&ofstream::put), &file));
+	std::for_each(data, data + size,
+		std::bind1st(std::mem_fun(&std::ofstream::put), &file));
 }
 
-static unsigned long get24(ifstream &file) {
+static unsigned long get24(std::ifstream &file) {
 	unsigned long tmp = file.get() & 0xFF;
 	tmp =   tmp << 8 | (file.get() & 0xFF);
 	return  tmp << 8 | (file.get() & 0xFF);
 }
 
-static unsigned long read(ifstream &file) {
+static unsigned long read(std::ifstream &file) {
 	unsigned long size = get24(file);
 	if (size > 4) {
 		file.ignore(size - 4);
@@ -109,29 +107,29 @@ static unsigned long read(ifstream &file) {
 	return out;
 }
 
-static inline void read(ifstream &file, unsigned char &data) {
+static inline void read(std::ifstream &file, unsigned char &data) {
 	data = read(file) & 0xFF;
 }
 
-static inline void read(ifstream &file, unsigned short &data) {
+static inline void read(std::ifstream &file, unsigned short &data) {
 	data = read(file) & 0xFFFF;
 }
 
-static inline void read(ifstream &file, unsigned long &data) {
+static inline void read(std::ifstream &file, unsigned long &data) {
 	data = read(file);
 }
 
-static void read(ifstream &file, unsigned char *buf, size_t bufsize) {
-	size_t const size = get24(file);
-	size_t const minsize = min(size, bufsize);
+static void read(std::ifstream &file, unsigned char *buf, std::size_t bufsize) {
+	std::size_t const size = get24(file);
+	std::size_t const minsize = std::min(size, bufsize);
 	file.read(reinterpret_cast<char*>(buf), minsize);
 	file.ignore(size - minsize);
 }
 
-static void read(ifstream &file, bool *buf, size_t bufsize) {
-	size_t const size = get24(file);
-	size_t const minsize = min(size, bufsize);
-	for (size_t i = 0; i < minsize; ++i)
+static void read(std::ifstream &file, bool *buf, std::size_t bufsize) {
+	std::size_t const size = get24(file);
+	std::size_t const minsize = std::min(size, bufsize);
+	for (std::size_t i = 0; i < minsize; ++i)
 		buf[i] = file.get();
 
 	file.ignore(size - minsize);
@@ -143,23 +141,23 @@ namespace gambatte {
 
 class SaverList {
 public:
-	typedef vector<Saver> list_t;
+	typedef std::vector<Saver> list_t;
 	typedef list_t::const_iterator const_iterator;
 
 	SaverList();
 	const_iterator begin() const { return list.begin(); }
 	const_iterator end() const { return list.end(); }
-	size_t maxLabelsize() const { return maxLabelsize_; }
+	std::size_t maxLabelsize() const { return maxLabelsize_; }
 
 private:
 	list_t list;
-	size_t maxLabelsize_;
+	std::size_t maxLabelsize_;
 };
 
 static void pushSaver(SaverList::list_t &list, char const *label,
-		void (*save)(ofstream &file, SaveState const &state),
-		void (*load)(ifstream &file, SaveState &state),
-		size_t labelsize) {
+		void (*save)(std::ofstream &file, SaveState const &state),
+		void (*load)(std::ifstream &file, SaveState &state),
+		std::size_t labelsize) {
 	Saver saver = { label, save, load, labelsize };
 	list.push_back(saver);
 }
@@ -167,18 +165,18 @@ static void pushSaver(SaverList::list_t &list, char const *label,
 SaverList::SaverList() {
 #define ADD(arg) do { \
 	struct Func { \
-		static void save(ofstream &file, SaveState const &state) { write(file, state.arg); } \
-		static void load(ifstream &file, SaveState &state) { read(file, state.arg); } \
+		static void save(std::ofstream &file, SaveState const &state) { write(file, state.arg); } \
+		static void load(std::ifstream &file, SaveState &state) { read(file, state.arg); } \
 	}; \
 	pushSaver(list, label, Func::save, Func::load, sizeof label); \
 } while (0)
 
 #define ADDPTR(arg) do { \
 	struct Func { \
-		static void save(ofstream &file, SaveState const &state) { \
+		static void save(std::ofstream &file, SaveState const &state) { \
 			write(file, state.arg.get(), state.arg.size()); \
 		} \
-		static void load(ifstream &file, SaveState &state) { \
+		static void load(std::ifstream &file, SaveState &state) { \
 			read(file, state.arg.ptr, state.arg.size()); \
 		} \
 	}; \
@@ -187,10 +185,10 @@ SaverList::SaverList() {
 
 #define ADDARRAY(arg) do { \
 	struct Func { \
-		static void save(ofstream &file, SaveState const &state) { \
+		static void save(std::ofstream &file, SaveState const &state) { \
 			write(file, state.arg, sizeof state.arg); \
 		} \
-		static void load(ifstream &file, SaveState &state) { \
+		static void load(std::ifstream &file, SaveState &state) { \
 			read(file, state.arg, sizeof state.arg); \
 		} \
 	}; \
@@ -318,11 +316,11 @@ SaverList::SaverList() {
 #undef ADDARRAY
 
 	list.resize(list.size());
-	sort(list.begin(), list.end());
+	std::sort(list.begin(), list.end());
 
 	maxLabelsize_ = 0;
 
-	for (size_t i = 0; i < list.size(); ++i) {
+	for (std::size_t i = 0; i < list.size(); ++i) {
 		if (list[i].labelsize > maxLabelsize_)
 			maxLabelsize_ = list[i].labelsize;
 	}
@@ -332,7 +330,7 @@ SaverList::SaverList() {
 
 namespace {
 
-static void writeSnapShot(ofstream &file, uint_least32_t const *pixels, ptrdiff_t const pitch) {
+static void writeSnapShot(std::ofstream &file, uint_least32_t const *pixels, std::ptrdiff_t const pitch) {
 	put24(file, pixels ? StateSaver::ss_width * StateSaver::ss_height * sizeof(uint_least32_t) : 0);
 
 	if (pixels) {
@@ -351,8 +349,8 @@ namespace gambatte {
 
 bool StateSaver::saveState(SaveState const &state,
 		uint_least32_t const *const videoBuf,
-		ptrdiff_t const pitch, string const &filename) {
-	ofstream file(filename.c_str(), ios_base::binary);
+		std::ptrdiff_t const pitch, std::string const &filename) {
+	std::ofstream file(filename.c_str(), std::ios_base::binary);
 	if (!file)
 		return false;
 
@@ -367,8 +365,8 @@ bool StateSaver::saveState(SaveState const &state,
 	return !file.fail();
 }
 
-bool StateSaver::loadState(SaveState &state, string const &filename) {
-	ifstream file(filename.c_str(), ios_base::binary);
+bool StateSaver::loadState(SaveState &state, std::string const &filename) {
+	std::ifstream file(filename.c_str(), std::ios_base::binary);
 	if (!file || file.get() != 0)
 		return false;
 
@@ -383,10 +381,10 @@ bool StateSaver::loadState(SaveState &state, string const &filename) {
 		file.getline(labelbuf, list.maxLabelsize(), '\0');
 
 		SaverList::const_iterator it = done;
-		if (strcmp(labelbuf, it->label)) {
-			it = lower_bound(it + 1, list.end(), labelbufSaver);
+		if (std::strcmp(labelbuf, it->label)) {
+			it = std::lower_bound(it + 1, list.end(), labelbufSaver);
 
-			if (it == list.end() || strcmp(labelbuf, it->label)) {
+			if (it == list.end() || std::strcmp(labelbuf, it->label)) {
 				file.ignore(get24(file));
 				continue;
 			}

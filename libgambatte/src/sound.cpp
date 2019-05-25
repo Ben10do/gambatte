@@ -43,8 +43,6 @@ Clock) clock timer on transition to step.
 
 */
 
-using namespace std;
-
 namespace gambatte {
 
 PSG::PSG()
@@ -94,7 +92,7 @@ void PSG::loadState(SaveState const &state) {
 
 void PSG::accumulateChannels(unsigned long const cycles) {
 	uint_least32_t *const buf = buffer_ + bufferPos_;
-	memset(buf, 0, cycles * sizeof *buf);
+	std::memset(buf, 0, cycles * sizeof *buf);
 	ch1_.update(buf, soVol_, cycles);
 	ch2_.update(buf, soVol_, cycles);
 	ch3_.update(buf, soVol_, cycles);
@@ -116,12 +114,12 @@ void PSG::resetCounter(unsigned long newCc, unsigned long oldCc, bool doubleSpee
 	lastUpdate_ = newCc - (oldCc - lastUpdate_);
 }
 
-size_t PSG::fillBuffer() {
+std::size_t PSG::fillBuffer() {
 	uint_least32_t sum = rsum_;
 	uint_least32_t *b = buffer_;
-	size_t n = bufferPos_;
+	std::size_t n = bufferPos_;
 
-	if (size_t n2 = n >> 3) {
+	if (std::size_t n2 = n >> 3) {
 		n -= n2 << 3;
 
 		do {

@@ -23,8 +23,6 @@
 #include <cstring>
 #include <fstream>
 
-using namespace std;
-
 namespace gambatte {
 
 namespace {
@@ -70,11 +68,11 @@ private:
 };
 
 static inline unsigned rambanks(MemPtrs const &memptrs) {
-	return size_t(memptrs.rambankdataend() - memptrs.rambankdata()) / 0x2000;
+	return std::size_t(memptrs.rambankdataend() - memptrs.rambankdata()) / 0x2000;
 }
 
 static inline unsigned rombanks(MemPtrs const &memptrs) {
-	return size_t(memptrs.romdataend()     - memptrs.romdata()    ) / 0x4000;
+	return std::size_t(memptrs.romdataend()     - memptrs.romdata()    ) / 0x4000;
 }
 
 class Mbc1 : public DefaultMbc {
@@ -328,7 +326,7 @@ private:
 	}
 
 	void setRombank() const {
-		memptrs_.setRombank(max(rombank_ & (rombanks(memptrs_) - 1), 1u));
+		memptrs_.setRombank(std::max(rombank_ & (rombanks(memptrs_) - 1), 1u));
 	}
 };
 
@@ -486,31 +484,31 @@ void Cartridge::loadState(SaveState const &state) {
 	mbc_->loadState(state.mem);
 }
 
-static string const stripExtension(string const &str) {
-	string::size_type const lastDot = str.find_last_of('.');
-	string::size_type const lastSlash = str.find_last_of('/');
+static std::string const stripExtension(std::string const &str) {
+	std::string::size_type const lastDot = str.find_last_of('.');
+	std::string::size_type const lastSlash = str.find_last_of('/');
 
-	if (lastDot != string::npos && (lastSlash == string::npos || lastSlash < lastDot))
+	if (lastDot != std::string::npos && (lastSlash == std::string::npos || lastSlash < lastDot))
 		return str.substr(0, lastDot);
 
 	return str;
 }
 
-static string const stripDir(string const &str) {
-	string::size_type const lastSlash = str.find_last_of('/');
-	if (lastSlash != string::npos)
+static std::string const stripDir(std::string const &str) {
+	std::string::size_type const lastSlash = str.find_last_of('/');
+	if (lastSlash != std::string::npos)
 		return str.substr(lastSlash + 1);
 
 	return str;
 }
 
-string const Cartridge::saveBasePath() const {
+std::string const Cartridge::saveBasePath() const {
 	return saveDir_.empty()
 	     ? defaultSaveBasePath_
 	     : saveDir_ + stripDir(defaultSaveBasePath_);
 }
 
-void Cartridge::setSaveDir(string const &dir) {
+void Cartridge::setSaveDir(std::string const &dir) {
 	saveDir_ = dir;
 	if (!saveDir_.empty() && saveDir_[saveDir_.length() - 1] != '/')
 		saveDir_ += '/';
@@ -531,7 +529,7 @@ static bool presumedMulti64Mbc1(unsigned char const header[], unsigned rombanks)
 	return header[0x147] == 1 && header[0x149] == 0 && rombanks == 64;
 }
 
-LoadRes Cartridge::loadROM(string const &romfile,
+LoadRes Cartridge::loadROM(std::string const &romfile,
                            bool const forceDmg,
                            bool const multicartCompat)
 {
@@ -587,8 +585,8 @@ LoadRes Cartridge::loadROM(string const &romfile,
 		cgb = header[0x0143] >> 7 & (1 ^ forceDmg);
 	}
 
-	size_t const filesize = rom->size();
-	rombanks = max(pow2ceil(filesize / 0x4000), 2u);
+	std::size_t const filesize = rom->size();
+	rombanks = std::max(pow2ceil(filesize / 0x4000), 2u);
 
 	defaultSaveBasePath_.clear();
 	ggUndoList_.clear();
@@ -598,9 +596,9 @@ LoadRes Cartridge::loadROM(string const &romfile,
 
 	rom->rewind();
 	rom->read(reinterpret_cast<char*>(memptrs_.romdata()), filesize / 0x4000 * 0x4000ul);
-	memset(memptrs_.romdata() + filesize / 0x4000 * 0x4000ul,
-	       0xFF,
-	       (rombanks - filesize / 0x4000) * 0x4000ul);
+	std::memset(memptrs_.romdata() + filesize / 0x4000 * 0x4000ul,
+	            0xFF,
+	            (rombanks - filesize / 0x4000) * 0x4000ul);
 
 	if (rom->fail())
 		return LOADRES_IO_ERROR;
@@ -653,10 +651,10 @@ static bool hasBattery(unsigned char headerByte0x147) {
 }
 
 void Cartridge::loadSavedata() {
-	string const &sbp = saveBasePath();
+	std::string const &sbp = saveBasePath();
 
 	if (hasBattery(memptrs_.romdata()[0x147])) {
-		ifstream file((sbp + ".sav").c_str(), ios::binary | ios::in);
+		std::ifstream file((sbp + ".sav").c_str(), std::ios::binary | std::ios::in);
 
 		if (file.is_open()) {
 			file.read(reinterpret_cast<char*>(memptrs_.rambankdata()),
@@ -665,7 +663,7 @@ void Cartridge::loadSavedata() {
 	}
 
 	if (hasRtc(memptrs_.romdata()[0x147])) {
-		ifstream file((sbp + ".rtc").c_str(), ios::binary | ios::in);
+		std::ifstream file((sbp + ".rtc").c_str(), std::ios::binary | std::ios::in);
 		if (file) {
 			unsigned long basetime =    file.get() & 0xFF;
 			basetime = basetime << 8 | (file.get() & 0xFF);
@@ -677,16 +675,16 @@ void Cartridge::loadSavedata() {
 }
 
 void Cartridge::saveSavedata() {
-	string const &sbp = saveBasePath();
+	std::string const &sbp = saveBasePath();
 
 	if (hasBattery(memptrs_.romdata()[0x147])) {
-		ofstream file((sbp + ".sav").c_str(), ios::binary | ios::out);
+		std::ofstream file((sbp + ".sav").c_str(), std::ios::binary | std::ios::out);
 		file.write(reinterpret_cast<char const *>(memptrs_.rambankdata()),
 		           memptrs_.rambankdataend() - memptrs_.rambankdata());
 	}
 
 	if (hasRtc(memptrs_.romdata()[0x147])) {
-		ofstream file((sbp + ".rtc").c_str(), ios::binary | ios::out);
+		std::ofstream file((sbp + ".rtc").c_str(), std::ios::binary | std::ios::out);
 		unsigned long const basetime = rtc_.baseTime();
 		file.put(basetime >> 24 & 0xFF);
 		file.put(basetime >> 16 & 0xFF);
@@ -699,7 +697,7 @@ static int asHex(char c) {
 	return c >= 'A' ? c - 'A' + 0xA : c - '0';
 }
 
-void Cartridge::applyGameGenie(string const &code) {
+void Cartridge::applyGameGenie(std::string const &code) {
 	if (6 < code.length()) {
 		unsigned const val = (asHex(code[0]) << 4 | asHex(code[1])) & 0xFF;
 		unsigned const addr = (    asHex(code[2])        <<  8
@@ -712,7 +710,7 @@ void Cartridge::applyGameGenie(string const &code) {
 			cmp = ((cmp >> 2 | cmp << 6) ^ 0x45) & 0xFF;
 		}
 
-		for (unsigned bank = 0; bank < size_t(memptrs_.romdataend() - memptrs_.romdata()) / 0x4000; ++bank) {
+		for (unsigned bank = 0; bank < std::size_t(memptrs_.romdataend() - memptrs_.romdata()) / 0x4000; ++bank) {
 			if (mbc_->isAddressWithinAreaRombankCanBeMappedTo(addr, bank)
 					&& (cmp > 0xFF || memptrs_.romdata()[bank * 0x4000ul + (addr & 0x3FFF)] == cmp)) {
 				ggUndoList_.push_back(AddrData(bank * 0x4000ul + (addr & 0x3FFF),
@@ -723,9 +721,9 @@ void Cartridge::applyGameGenie(string const &code) {
 	}
 }
 
-void Cartridge::setGameGenie(string const &codes) {
+void Cartridge::setGameGenie(std::string const &codes) {
 	if (loaded()) {
-		for (vector<AddrData>::reverse_iterator it =
+		for (std::vector<AddrData>::reverse_iterator it =
 				ggUndoList_.rbegin(), end = ggUndoList_.rend(); it != end; ++it) {
 			if (memptrs_.romdata() + it->addr < memptrs_.romdataend())
 				memptrs_.romdata()[it->addr] = it->data;
@@ -733,8 +731,8 @@ void Cartridge::setGameGenie(string const &codes) {
 
 		ggUndoList_.clear();
 
-		string code;
-		for (size_t pos = 0; pos < codes.length(); pos += code.length() + 1) {
+		std::string code;
+		for (std::size_t pos = 0; pos < codes.length(); pos += code.length() + 1) {
 			code = codes.substr(pos, codes.find(';', pos) - pos);
 			applyGameGenie(code);
 		}

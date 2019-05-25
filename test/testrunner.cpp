@@ -9,19 +9,17 @@
 #include <cctype>
 #include <cstring>
 
-using namespace std;
-
 namespace {
 
-struct FileDeleter { static void del(FILE *f) { if (f) fclose(f); } };
-typedef transfer_ptr<FILE, FileDeleter> file_ptr;
+struct FileDeleter { static void del(std::FILE *f) { if (f) std::fclose(f); } };
+typedef transfer_ptr<std::FILE, FileDeleter> file_ptr;
 
 unsigned const gb_width = 160, gb_height = 144;
-size_t const samples_per_frame = 35112;
-size_t const audiobuf_size = samples_per_frame + 2064;
-size_t const framebuf_size = gb_width * gb_height;
+std::size_t const samples_per_frame = 35112;
+std::size_t const audiobuf_size = samples_per_frame + 2064;
+std::size_t const framebuf_size = gb_width * gb_height;
 
-static void readPng(gambatte::uint_least32_t out[], FILE &file) {
+static void readPng(gambatte::uint_least32_t out[], std::FILE &file) {
 	struct PngContext {
 		png_structp png;
 		png_infop info;
@@ -43,7 +41,7 @@ static void readPng(gambatte::uint_least32_t out[], FILE &file) {
 	} const pngCtx;
 
 	if (setjmp(png_jmpbuf(pngCtx.png)))
-		abort();
+		std::abort();
 
 	png_init_io(pngCtx.png, &file);
 	png_read_png(pngCtx.png, pngCtx.info, 0, 0);
@@ -53,8 +51,8 @@ static void readPng(gambatte::uint_least32_t out[], FILE &file) {
 
 	png_bytep const *const rows = png_get_rows(pngCtx.png, pngCtx.info);
 
-	for (size_t y = 0; y < gb_height; ++y)
-	for (size_t x = 0; x < gb_width; ++x) {
+	for (std::size_t y = 0; y < gb_height; ++y)
+	for (std::size_t x = 0; x < gb_width; ++x) {
 		out[y * gb_width + x] = rows[y][x * 4]
 			| rows[y][x * 4 + 1] << 8
 			| rows[y][x * 4 + 2] << 16;
@@ -229,10 +227,10 @@ static bool tilesAreEqual(
 	return true;
 }
 
-static bool frameBufferMatchesOut(gambatte::uint_least32_t const framebuf[], string const &out) {
+static bool frameBufferMatchesOut(gambatte::uint_least32_t const framebuf[], std::string const &out) {
 	gambatte::uint_least32_t const *outTile;
 
-	for (size_t i = 0; (outTile = tileFromChar(out[i])) != 0; ++i) {
+	for (std::size_t i = 0; (outTile = tileFromChar(out[i])) != 0; ++i) {
 		if (!tilesAreEqual(framebuf + i * 8, outTile))
 			return false;
 	}
@@ -243,7 +241,7 @@ static bool frameBufferMatchesOut(gambatte::uint_least32_t const framebuf[], str
 static bool frameBufsEqual(
 		gambatte::uint_least32_t const lhs[],
 		gambatte::uint_least32_t const rhs[]) {
-	for (size_t i = 0; i < framebuf_size; ++i) {
+	for (std::size_t i = 0; i < framebuf_size; ++i) {
 		if ((lhs[i] ^ rhs[i]) & 0xFCFCFC)
 			return false;
 	}
@@ -254,58 +252,58 @@ static bool frameBufsEqual(
 static bool evaluateStrTestResults(
 		gambatte::uint_least32_t const audiobuf[],
 		gambatte::uint_least32_t const framebuf[],
-		string const &file,
-		string const &outstr) {
-	size_t const outpos = file.find(outstr);
-	assert(outpos != string::npos);
+		std::string const &file,
+		std::string const &outstr) {
+	std::size_t const outpos = file.find(outstr);
+	assert(outpos != std::string::npos);
 
 	if (file.compare(outpos + outstr.size(), 6, "audio0") == 0) {
-		if (count(audiobuf, audiobuf + samples_per_frame, audiobuf[0]) == samples_per_frame)
+		if (std::count(audiobuf, audiobuf + samples_per_frame, audiobuf[0]) == samples_per_frame)
 			return true;
 	} else if (file.compare(outpos + outstr.size(), 6, "audio1") == 0) {
-		if (count(audiobuf, audiobuf + samples_per_frame, audiobuf[0]) != samples_per_frame)
+		if (std::count(audiobuf, audiobuf + samples_per_frame, audiobuf[0]) != samples_per_frame)
 			return true;
 	} else {
 		if (frameBufferMatchesOut(framebuf, file.substr(outpos + outstr.size())))
 			return true;
 	}
 
-	printf("\nFAILED: %s %s\n", file.c_str(), outstr.c_str());
+	std::printf("\nFAILED: %s %s\n", file.c_str(), outstr.c_str());
 	return false;
 }
 
 static void runTestRom(
 		gambatte::uint_least32_t framebuf[],
 		gambatte::uint_least32_t audiobuf[],
-		string const &file,
+		std::string const &file,
 		bool const forceDmg) {
 	gambatte::GB gb;
 
 	if (gb.load(file, forceDmg)) {
-		fprintf(stderr, "Failed to load ROM image file %s\n", file.c_str());
-		abort();
+		std::fprintf(stderr, "Failed to load ROM image file %s\n", file.c_str());
+		std::abort();
 	}
 
-	putchar(gb.isCgb() ? 'c' : 'd');
-	fflush(stdout);
+	std::putchar(gb.isCgb() ? 'c' : 'd');
+	std::fflush(stdout);
 
 	long samplesLeft = samples_per_frame * 15;
 
 	while (samplesLeft >= 0) {
-		size_t samples = samples_per_frame;
+		std::size_t samples = samples_per_frame;
 		gb.runFor(framebuf, gb_width, audiobuf, samples);
 		samplesLeft -= samples;
 	}
 }
 
-static bool runStrTest(string const &romfile, bool forceDmg, string const &outstr) {
+static bool runStrTest(std::string const &romfile, bool forceDmg, std::string const &outstr) {
 	gambatte::uint_least32_t audiobuf[audiobuf_size];
 	gambatte::uint_least32_t framebuf[framebuf_size];
 	runTestRom(framebuf, audiobuf, romfile, forceDmg);
 	return evaluateStrTestResults(audiobuf, framebuf, romfile, outstr);
 }
 
-static bool runPngTest(string const &romfile, bool forceDmg, FILE &pngfile) {
+static bool runPngTest(std::string const &romfile, bool forceDmg, std::FILE &pngfile) {
 	gambatte::uint_least32_t audiobuf[audiobuf_size];
 	gambatte::uint_least32_t framebuf[framebuf_size];
 	runTestRom(framebuf, audiobuf, romfile, forceDmg);
@@ -314,19 +312,19 @@ static bool runPngTest(string const &romfile, bool forceDmg, FILE &pngfile) {
 	readPng(pngbuf, pngfile);
 
 	if (!frameBufsEqual(framebuf, pngbuf)) {
-		printf("\nFAILED: %s png\n", romfile.c_str());
+		std::printf("\nFAILED: %s png\n", romfile.c_str());
 		return false;
 	}
 
 	return true;
 }
 
-static string extensionStripped(string const &s) {
+static std::string extensionStripped(std::string const &s) {
 	return s.substr(0, s.rfind('.'));
 }
 
-static file_ptr openFile(string const &filename) {
-	return file_ptr(fopen(filename.c_str(), "rb"));
+static file_ptr openFile(std::string const &filename) {
+	return file_ptr(std::fopen(filename.c_str(), "rb"));
 }
 
 } // anon ns
@@ -336,19 +334,19 @@ int main(int const argc, char *argv[]) {
 	int numTestsSucceeded = 0;
 
 	for (int i = 1; i < argc; ++i) {
-		string const s = extensionStripped(argv[i]);
+		std::string const s = extensionStripped(argv[i]);
 		char const *dmgout = 0;
 		char const *cgbout = 0;
 
-		if (s.find("dmg08_cgb04c_out") != string::npos) {
+		if (s.find("dmg08_cgb04c_out") != std::string::npos) {
 			dmgout = cgbout = "dmg08_cgb04c_out";
 		} else {
-			if (s.find("dmg08_out") != string::npos) {
+			if (s.find("dmg08_out") != std::string::npos) {
 				dmgout = "dmg08_out";
 
-				if (s.find("cgb04c_out") != string::npos)
+				if (s.find("cgb04c_out") != std::string::npos)
 					cgbout = "cgb04c_out";
-			} else if (s.find("_out") != string::npos)
+			} else if (s.find("_out") != std::string::npos)
 				cgbout = "_out";
 		}
 		if (cgbout) {
@@ -376,7 +374,7 @@ int main(int const argc, char *argv[]) {
 		}
 	}
 
-	printf("\n\nRan %d tests.\n", numTestsRun);
-	printf("%d failures.\n", numTestsRun - numTestsSucceeded);
+	std::printf("\n\nRan %d tests.\n", numTestsRun);
+	std::printf("%d failures.\n", numTestsRun - numTestsSucceeded);
 	return numTestsRun - numTestsSucceeded != 0;
 }

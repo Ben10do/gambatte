@@ -23,8 +23,6 @@
 #include "savestate.h"
 #include <algorithm>
 
-using namespace std;
-
 namespace gambatte {
 
 LycIrq::LycIrq()
@@ -49,7 +47,7 @@ void LycIrq::regChange(unsigned const statReg,
 	unsigned long const timeSrc = schedule(statReg, lycReg, lyCounter, cc);
 	statRegSrc_ = statReg;
 	lycRegSrc_ = lycReg;
-	time_ = min(time_, timeSrc);
+	time_ = std::min(time_, timeSrc);
 
 	if (cgb_) {
 		if (time_ - cc > 8 || (timeSrc != time_ && time_ - cc > 4U - lyCounter.isDoubleSpeed() * 4U))
@@ -98,8 +96,8 @@ void LycIrq::saveState(SaveState &state) const {
 }
 
 void LycIrq::reschedule(LyCounter const &lyCounter, unsigned long cc) {
-	time_ = min(schedule(statReg_   , lycReg_   , lyCounter, cc),
-	            schedule(statRegSrc_, lycRegSrc_, lyCounter, cc));
+	time_ = std::min(schedule(statReg_   , lycReg_   , lyCounter, cc),
+	                 schedule(statRegSrc_, lycRegSrc_, lyCounter, cc));
 }
 
 void LycIrq::lcdReset() {

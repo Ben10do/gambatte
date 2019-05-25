@@ -21,8 +21,6 @@
 #include <algorithm>
 #include <cstring>
 
-using namespace std;
-
 static inline unsigned toPeriod(unsigned nr3, unsigned nr4) {
 	return 0x800 - ((nr4 << 8 & 0x700) | nr3);
 }
@@ -72,7 +70,7 @@ void Channel3::setNr4(unsigned const data) {
 			if (pos < 4)
 				waveRam_[0] = waveRam_[pos];
 			else
-				memcpy(waveRam_, waveRam_ + (pos & ~3), 4);
+				std::memcpy(waveRam_, waveRam_ + (pos & ~3), 4);
 		}
 
 		master_ = true;
@@ -117,7 +115,7 @@ void Channel3::loadState(SaveState const &state) {
 	lengthCounter_.loadState(state.spu.ch3.lcounter, state.spu.cycleCounter);
 
 	cycleCounter_ = state.spu.cycleCounter;
-	waveCounter_ = max(state.spu.ch3.waveCounter, state.spu.cycleCounter);
+	waveCounter_ = std::max(state.spu.ch3.waveCounter, state.spu.cycleCounter);
 	lastReadTime_ = state.spu.ch3.lastReadTime;
 	nr3_ = state.spu.ch3.nr3;
 	nr4_ = state.spu.ch3.nr4;
@@ -152,7 +150,7 @@ void Channel3::update(uint_least32_t *buf, unsigned long const soBaseVol, unsign
 
 		for (;;) {
 			unsigned long const nextMajorEvent =
-				min(lengthCounter_.counter(), endCycles);
+				std::min(lengthCounter_.counter(), endCycles);
 			unsigned long out = master_
 				? ((sampleBuf_ >> (~wavePos_ << 2 & 4) & 0xF) >> rshift_) * 2 - 15ul
 				: 0 - 15ul;

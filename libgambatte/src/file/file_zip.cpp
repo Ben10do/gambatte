@@ -27,13 +27,11 @@ namespace zlib {
 #include "unzip/unzip.h"
 }
 
-using namespace std;
-
 namespace {
 
 class ZipFile : public gambatte::File {
   private:
-  size_t fsize, count;
+  std::size_t fsize, count;
   void *zipfile;
   bool zip_sub_open;
 
@@ -45,9 +43,9 @@ class ZipFile : public gambatte::File {
   virtual void rewind();
   bool is_open() const;
   virtual void close();
-  virtual size_t size() const { return fsize; };
-  virtual void read(char *buffer, size_t amount);
-  size_t gcount() const { return count; }
+  virtual std::size_t size() const { return fsize; };
+  virtual void read(char *buffer, std::size_t amount);
+  std::size_t gcount() const { return count; }
   virtual bool fail() const { return !is_open(); }
 };
 
@@ -177,9 +175,9 @@ public:
 			close();
 	}
 
-	virtual size_t size() const { return fsize_; };
+	virtual std::size_t size() const { return fsize_; };
 
-	virtual void read(char *buffer, size_t amount) {
+	virtual void read(char *buffer, std::size_t amount) {
 		if (file_ && gzread(file_, buffer, amount) < 0)
 			close();
 	}
@@ -188,7 +186,7 @@ public:
 
 private:
 	gzFile file_;
-	size_t fsize_;
+	std::size_t fsize_;
 
 	GzFile(GzFile const &);
 	GzFile & operator=(GzFile const &);
@@ -205,18 +203,18 @@ void GzFile::close() {
 }
 
 // Avoid checking magic header values, because there are no values that cannot occur in a GB ROM.
-transfer_ptr<gambatte::File> gambatte::newFileInstance(string const &filepath) {
-	size_t const extpos = filepath.rfind('.');
+transfer_ptr<gambatte::File> gambatte::newFileInstance(std::string const &filepath) {
+	std::size_t const extpos = filepath.rfind('.');
 
-	if (extpos != string::npos) {
-		string const &ext = filepath.substr(extpos + 1);
+	if (extpos != std::string::npos) {
+		std::string const &ext = filepath.substr(extpos + 1);
 
-		if (ext.length() == 3 && tolower(ext[0]) == 'z'
-				&& tolower(ext[1]) == 'i' && tolower(ext[2]) == 'p') {
+		if (ext.length() == 3 && std::tolower(ext[0]) == 'z'
+				&& std::tolower(ext[1]) == 'i' && std::tolower(ext[2]) == 'p') {
 			return transfer_ptr<File>(new ZipFile(filepath.c_str()));
 		}
 
-		if (!ext.empty() && tolower(ext[ext.length() - 1]) == 'z')
+		if (!ext.empty() && std::tolower(ext[ext.length() - 1]) == 'z')
 			return transfer_ptr<File>(new GzFile(filepath.c_str()));
 	}
 

@@ -20,8 +20,6 @@
 #include "../savestate.h"
 #include <algorithm>
 
-using namespace std;
-
 namespace gambatte {
 
 Channel2::Channel2()
@@ -124,7 +122,7 @@ void Channel2::update(uint_least32_t *buf, unsigned long const soBaseVol, unsign
 		unsigned long const outHigh = master_
 		                            ? outBase * (envelopeUnit_.getVolume() * 2 - 15ul)
 		                            : outLow;
-		unsigned long const nextMajorEvent = min(nextEventUnit->counter(), endCycles);
+		unsigned long const nextMajorEvent = std::min(nextEventUnit->counter(), endCycles);
 		unsigned long out = dutyUnit_.isHighState() ? outHigh : outLow;
 
 		while (dutyUnit_.counter() <= nextMajorEvent) {
