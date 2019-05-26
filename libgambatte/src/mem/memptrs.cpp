@@ -114,8 +114,8 @@ void MemPtrs::reset(unsigned const rombanks, unsigned const rambanks, unsigned c
 void MemPtrs::resetWithRomIntact(unsigned const rambanks, unsigned const wrambanks) {
 	unsigned romsize = romdataend() - romdata();
 
-	unsigned char *oldrom = new unsigned char[rambankdata_ - memchunk_];
-	std::copy(memchunk_.get(), rambankdata_, oldrom);
+	const auto oldrom = std::unique_ptr<unsigned char[]>(new unsigned char[rambankdata_ - memchunk_]);
+	std::copy(memchunk_.get(), rambankdata_, oldrom.get());
 
 	int const num_disabled_ram_areas = 2;
 	memchunk_.reset(
@@ -131,7 +131,7 @@ void MemPtrs::resetWithRomIntact(unsigned const rambanks, unsigned const wramban
 	wramdata_[0] = rambankdata_ + rambanks * rambank_size();
 	wramdataend_ = wramdata_[0] + wrambanks * wrambank_size();
 
-	std::copy(oldrom, oldrom + (rambankdata_ - memchunk_), memchunk_.get());
+	std::copy(oldrom.get(), oldrom.get() + (rambankdata_ - memchunk_), memchunk_.get());
 	std::fill_n(rdisabledRamw(), rambank_size(), 0xFF);
 
 	oamDmaSrc_ = oam_dma_src_off;
